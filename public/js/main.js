@@ -233,22 +233,38 @@ window.removeCartItem = (id) => {
   renderCart();
 };
 
-// Helper to save order to server database (so it displays in Admin panel for all devices)
+// Helper to save order to Supabase cloud database (works across all devices)
 async function saveOrderToStorage(orderData) {
   try {
-    const response = await fetch('/api/orders', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(orderData)
-    });
-    if (response.ok) {
-      const savedOrder = await response.json();
-      return savedOrder.id;
+    const now = new Date();
+    const dateStr = now.getFullYear() + '-' + 
+                    String(now.getMonth() + 1).padStart(2, '0') + '-' + 
+                    String(now.getDate()).padStart(2, '0') + ' ' + 
+                    String(now.getHours()).padStart(2, '0') + ':' + 
+                    String(now.getMinutes()).padStart(2, '0') + ' ' + 
+                    (now.getHours() >= 12 ? 'PM' : 'AM');
+
+    const { data, error } = await supabaseClient
+      .from('orders')
+      .insert({
+        customer_name: orderData.customerName || 'WhatsApp Customer',
+        mobile_number: orderData.mobileNumber || 'Via WhatsApp',
+        address: orderData.address || 'Provided via WhatsApp',
+        order_date: dateStr,
+        items: orderData.items || [],
+        total_amount: orderData.totalAmount || 0,
+        payment_method: orderData.paymentMethod || 'UPI/Cash',
+        status: 'Pending',
+        notification_history: []
+      })
+      .select();
+
+    if (!error && data && data.length > 0) {
+      return data[0].id;
     }
+    console.error('Supabase insert error:', error);
   } catch (err) {
-    console.error('Error saving order to server database:', err);
+    console.error('Error saving order to Supabase:', err);
   }
   // Fallback to offline ID generation
   return 'VRB' + Date.now();

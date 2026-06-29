@@ -335,7 +335,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initUploadZone();
 });
 
-// Load items and orders from LocalStorage or pre-populate with defaults
+// Load items from LocalStorage and orders from Supabase cloud database
 async function initData() {
   const stored = localStorage.getItem('pooja_store_items');
   if (stored) {
@@ -350,15 +350,32 @@ async function initData() {
     saveData();
   }
 
+  // Load orders from Supabase
   try {
-    const response = await fetch('/api/orders');
-    if (response.ok) {
-      orders = await response.json();
+    const { data, error } = await supabaseClient
+      .from('orders')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (!error && data) {
+      orders = data.map(row => ({
+        id: row.id,
+        customerName: row.customer_name,
+        mobileNumber: row.mobile_number,
+        address: row.address,
+        date: row.order_date,
+        items: row.items || [],
+        totalAmount: row.total_amount,
+        paymentMethod: row.payment_method,
+        status: row.status,
+        notificationHistory: row.notification_history || []
+      }));
     } else {
+      console.error('Supabase fetch error:', error);
       orders = [];
     }
   } catch (err) {
-    console.error('Error fetching orders from server:', err);
+    console.error('Error fetching orders from Supabase:', err);
     orders = [];
   }
   
@@ -373,15 +390,19 @@ function saveData() {
 
 async function saveOrdersToServer(order) {
   try {
-    await fetch(`/api/orders/${order.id}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(order)
-    });
+    const { error } = await supabaseClient
+      .from('orders')
+      .update({
+        status: order.status,
+        notification_history: order.notificationHistory || []
+      })
+      .eq('id', order.id);
+
+    if (error) {
+      console.error('Supabase update error:', error);
+    }
   } catch (err) {
-    console.error('Error saving order status update to server:', err);
+    console.error('Error updating order in Supabase:', err);
   }
 }
 
