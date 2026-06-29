@@ -270,72 +270,157 @@ async function saveOrderToStorage(orderData) {
   return 'VRB' + Date.now();
 }
 
+// Customer Details Modal - collects name, phone, address before order
+function showCustomerDetailsModal(callback) {
+  // Remove existing modal if any
+  const existing = document.getElementById('customerDetailsModal');
+  if (existing) existing.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'customerDetailsModal';
+  modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:10000;backdrop-filter:blur(4px);';
+  modal.innerHTML = `
+    <div style="background:#fff;border-radius:16px;padding:28px 24px;width:90%;max-width:400px;box-shadow:0 20px 60px rgba(0,0,0,0.3);font-family:'Outfit',sans-serif;">
+      <h3 style="margin:0 0 6px;font-size:1.25rem;color:#1a1a2e;">📋 Your Details</h3>
+      <p style="margin:0 0 18px;font-size:0.85rem;color:#666;">Please fill in your details to place the order.</p>
+      <div style="margin-bottom:14px;">
+        <label style="display:block;font-size:0.8rem;font-weight:600;color:#333;margin-bottom:4px;">Full Name *</label>
+        <input type="text" id="custName" placeholder="Enter your full name" required
+          style="width:100%;padding:10px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:0.9rem;font-family:inherit;box-sizing:border-box;outline:none;transition:border 0.2s;"
+          onfocus="this.style.borderColor='#e8630a'" onblur="this.style.borderColor='#ddd'">
+      </div>
+      <div style="margin-bottom:14px;">
+        <label style="display:block;font-size:0.8rem;font-weight:600;color:#333;margin-bottom:4px;">Phone Number *</label>
+        <input type="tel" id="custPhone" placeholder="Enter 10-digit mobile number" required
+          style="width:100%;padding:10px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:0.9rem;font-family:inherit;box-sizing:border-box;outline:none;transition:border 0.2s;"
+          onfocus="this.style.borderColor='#e8630a'" onblur="this.style.borderColor='#ddd'">
+      </div>
+      <div style="margin-bottom:18px;">
+        <label style="display:block;font-size:0.8rem;font-weight:600;color:#333;margin-bottom:4px;">Delivery Address *</label>
+        <textarea id="custAddress" placeholder="Enter your full delivery address" rows="2" required
+          style="width:100%;padding:10px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:0.9rem;font-family:inherit;box-sizing:border-box;outline:none;resize:vertical;transition:border 0.2s;"
+          onfocus="this.style.borderColor='#e8630a'" onblur="this.style.borderColor='#ddd'"></textarea>
+      </div>
+      <div id="custError" style="color:#e53e3e;font-size:0.8rem;margin-bottom:10px;display:none;"></div>
+      <div style="display:flex;gap:10px;">
+        <button id="custCancel" style="flex:1;padding:10px;border:1.5px solid #ddd;border-radius:8px;background:#fff;color:#555;font-size:0.9rem;font-weight:600;cursor:pointer;font-family:inherit;">Cancel</button>
+        <button id="custSubmit" style="flex:1;padding:10px;border:none;border-radius:8px;background:linear-gradient(135deg,#e8630a,#ff8c42);color:#fff;font-size:0.9rem;font-weight:600;cursor:pointer;font-family:inherit;">Place Order</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  // Focus on name field
+  setTimeout(() => document.getElementById('custName').focus(), 100);
+
+  document.getElementById('custCancel').onclick = () => modal.remove();
+  modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+
+  document.getElementById('custSubmit').onclick = () => {
+    const name = document.getElementById('custName').value.trim();
+    const phone = document.getElementById('custPhone').value.trim();
+    const address = document.getElementById('custAddress').value.trim();
+    const errorEl = document.getElementById('custError');
+
+    if (!name || !phone || !address) {
+      errorEl.textContent = 'Please fill in all fields.';
+      errorEl.style.display = 'block';
+      return;
+    }
+    if (!/^\d{10}$/.test(phone)) {
+      errorEl.textContent = 'Please enter a valid 10-digit phone number.';
+      errorEl.style.display = 'block';
+      return;
+    }
+
+    modal.remove();
+    callback({ name, phone, address });
+  };
+}
+
 // Checkout Flow
-window.checkoutWhatsApp = async () => {
+window.checkoutWhatsApp = () => {
   if (cart.length === 0) return;
 
-  let total = 0;
-  cart.forEach((item) => {
-    total += item.price * item.qty;
+  showCustomerDetailsModal(async (customer) => {
+    let total = 0;
+    cart.forEach((item) => {
+      total += item.price * item.qty;
+    });
+
+    const orderId = await saveOrderToStorage({
+      customerName: customer.name,
+      mobileNumber: customer.phone,
+      address: customer.address,
+      items: cart.map(item => ({
+        name: item.name,
+        price: item.price,
+        quantity: item.qty
+      })),
+      totalAmount: total
+    });
+
+    let message = `Hello! I would like to order the following items from your Pooja Store:\n\n`;
+    message += `*ORDER ID:* ${orderId}\n\n`;
+    message += `*CUSTOMER DETAILS:*\n`;
+    message += `- *Name:* ${customer.name}\n`;
+    message += `- *Phone:* ${customer.phone}\n`;
+    message += `- *Address:* ${customer.address}\n\n`;
+    message += `*ORDER DETAILS:*\n`;
+
+    cart.forEach((item, index) => {
+      const itemTotal = item.price * item.qty;
+      message += `${index + 1}. *${item.name}* (Qty: ${item.qty}) - ₹${item.price} each [Total: ₹${itemTotal}]\n`;
+    });
+
+    message += `\n*TOTAL AMOUNT:* ₹${total}\n\n`;
+    message += `Please confirm the order and share delivery details. Thank you!`;
+
+    const encodedText = encodeURIComponent(message);
+    const whatsappUrl = `https://wa.me/${WHATSAPP_PHONE}?text=${encodedText}`;
+    window.open(whatsappUrl, '_blank');
+
+    // Clear cart
+    cart = [];
+    saveCart();
+    updateCartBadge();
+    renderCart();
   });
-
-  const orderId = await saveOrderToStorage({
-    customerName: 'WhatsApp Customer',
-    items: cart.map(item => ({
-      name: item.name,
-      price: item.price,
-      quantity: item.qty
-    })),
-    totalAmount: total
-  });
-
-  let message = `Hello! I would like to order the following items from your Pooja Store:\n\n`;
-  message += `*ORDER ID:* ${orderId}\n\n`;
-  message += `*ORDER DETAILS:*\n`;
-
-  cart.forEach((item, index) => {
-    const itemTotal = item.price * item.qty;
-    message += `${index + 1}. *${item.name}* (Qty: ${item.qty}) - ₹${item.price} each [Total: ₹${itemTotal}]\n`;
-  });
-
-  message += `\n*TOTAL AMOUNT:* ₹${total}\n\n`;
-  message += `Please confirm the order and share delivery details. Thank you!`;
-
-  const encodedText = encodeURIComponent(message);
-  const whatsappUrl = `https://wa.me/${WHATSAPP_PHONE}?text=${encodedText}`;
-  window.open(whatsappUrl, '_blank');
-
-  // Clear cart
-  cart = [];
-  saveCart();
-  updateCartBadge();
-  renderCart();
 };
 
 // Immediate Single Item WhatsApp Order Direct
-window.orderDirect = async (name, price) => {
-  let orderId = '';
+window.orderDirect = (name, price) => {
   if (price > 0 && !name.includes('Inquiry') && !name.includes('Query')) {
-    orderId = await saveOrderToStorage({
-      customerName: 'Direct WhatsApp Customer',
-      items: [{ name: name, price: price, quantity: 1 }],
-      totalAmount: price
+    showCustomerDetailsModal(async (customer) => {
+      const orderId = await saveOrderToStorage({
+        customerName: customer.name,
+        mobileNumber: customer.phone,
+        address: customer.address,
+        items: [{ name: name, price: price, quantity: 1 }],
+        totalAmount: price
+      });
+
+      let message = `Hello! I want to order the following item:\n\n`;
+      message += `*ORDER ID:* ${orderId}\n\n`;
+      message += `*CUSTOMER DETAILS:*\n`;
+      message += `- *Name:* ${customer.name}\n`;
+      message += `- *Phone:* ${customer.phone}\n`;
+      message += `- *Address:* ${customer.address}\n\n`;
+      message += `*Product:* ${name}\n`;
+      message += `*Price:* ₹${price}\n`;
+      message += `\nPlease confirm availability. Thank you!`;
+
+      const encodedText = encodeURIComponent(message);
+      const whatsappUrl = `https://wa.me/${WHATSAPP_PHONE}?text=${encodedText}`;
+      window.open(whatsappUrl, '_blank');
     });
+  } else {
+    // For inquiries (no price), just open WhatsApp directly
+    let message = `Hello! I want to inquire about: ${name}\n\nPlease share details. Thank you!`;
+    const encodedText = encodeURIComponent(message);
+    const whatsappUrl = `https://wa.me/${WHATSAPP_PHONE}?text=${encodedText}`;
+    window.open(whatsappUrl, '_blank');
   }
-
-  let message = `Hello! I want to order the following item:\n\n`;
-  if (orderId) {
-    message += `*ORDER ID:* ${orderId}\n\n`;
-  }
-  message += `*Product:* ${name}\n`;
-  if (price > 0) {
-    message += `*Price:* ₹${price}\n`;
-  }
-  message += `\nPlease confirm availability. Thank you!`;
-
-  const encodedText = encodeURIComponent(message);
-  const whatsappUrl = `https://wa.me/${WHATSAPP_PHONE}?text=${encodedText}`;
-  window.open(whatsappUrl, '_blank');
 };
 
 // 4. Rental Booking Form
