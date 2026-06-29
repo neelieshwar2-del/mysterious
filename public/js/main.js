@@ -1,6 +1,6 @@
 // Pooja Store - Main JS Configuration & Interactive Features
 
-const WHATSAPP_PHONE = '918143242659'; // Store Owner WhatsApp Number (with country code, no + or spaces)
+const WHATSAPP_PHONE = '919908563384'; // Store Owner WhatsApp Number (with country code, no + or spaces)
 // Cart State Management
 let cart = [];
 
