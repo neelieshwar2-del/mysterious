@@ -336,7 +336,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Load items and orders from LocalStorage or pre-populate with defaults
-function initData() {
+async function initData() {
   const stored = localStorage.getItem('pooja_store_items');
   if (stored) {
     try {
@@ -350,26 +350,39 @@ function initData() {
     saveData();
   }
 
-  const storedOrders = localStorage.getItem('pooja_store_orders');
-  if (storedOrders) {
-    try {
-      orders = JSON.parse(storedOrders);
-    } catch (e) {
-      orders = [...DEFAULT_ORDERS];
-      saveOrders();
+  try {
+    const response = await fetch('/api/orders');
+    if (response.ok) {
+      orders = await response.json();
+    } else {
+      orders = [];
     }
-  } else {
-    orders = [...DEFAULT_ORDERS];
-    saveOrders();
+  } catch (err) {
+    console.error('Error fetching orders from server:', err);
+    orders = [];
   }
+  
+  // Render views after asynchronous retrieval
+  renderOrders();
+  renderDashboard();
 }
 
 function saveData() {
   localStorage.setItem('pooja_store_items', JSON.stringify(items));
 }
 
-function saveOrders() {
-  localStorage.setItem('pooja_store_orders', JSON.stringify(orders));
+async function saveOrdersToServer(order) {
+  try {
+    await fetch(`/api/orders/${order.id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(order)
+    });
+  } catch (err) {
+    console.error('Error saving order status update to server:', err);
+  }
 }
 
 // Authentication Handlers
@@ -1288,7 +1301,7 @@ function closeConfirmationModal() {
   orderStatusChangeTarget = { orderId: '', newStatus: '' };
 }
 
-function confirmStatusUpdate() {
+async function confirmStatusUpdate() {
   const { orderId, newStatus } = orderStatusChangeTarget;
   if (!orderId || !newStatus) return;
 
@@ -1300,8 +1313,11 @@ function confirmStatusUpdate() {
   
   triggerNotificationIfApplicable(order, newStatus);
   
-  saveOrders();
   closeConfirmationModal();
+  
+  // Asynchronously save update to server
+  await saveOrdersToServer(order);
+  
   renderOrders();
   renderDashboard();
   
