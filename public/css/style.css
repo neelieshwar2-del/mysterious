@@ -141,15 +141,15 @@
 
  .logo-text {
    font-family: var(--font-heading);
-   font-size: 1.4rem;
+   font-size: 1.25rem;
    font-weight: 800;
    color: var(--color-accent);
    letter-spacing: 0.5px;
  }
 
  .logo-navbar-img {
-   width: 50px;
-   height: 50px;
+   width: 44px;
+   height: 44px;
    object-fit: cover;
    border-radius: 50%;
    display: block;
@@ -175,7 +175,7 @@
 
  .nav-links {
    display: flex;
-   gap: 2rem;
+   gap: 1.5rem;
    list-style: none;
  }
 
@@ -209,7 +209,7 @@
  .nav-actions {
    display: flex;
    align-items: center;
-   gap: 1.25rem;
+   gap: 1rem;
  }
 
  /* Cart Trigger Icon */
@@ -1362,6 +1362,26 @@
 
  /* Responsive Breakpoints (Mobile First Overrides) */
  @media (max-width: 1024px) {
+   .header-container {
+     padding: 1rem;
+   }
+   
+   .nav-links {
+     gap: 1rem;
+   }
+   
+   .logo-text {
+     font-size: 1.1rem;
+   }
+
+   .nav-actions {
+     gap: 0.5rem;
+   }
+   
+   .nav-links a {
+     font-size: 0.9rem;
+   }
+
    .hero-container {
      gap: 2rem;
    }
