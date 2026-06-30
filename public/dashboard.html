@@ -211,11 +211,11 @@
 
           html += `
             <tr>
-              <td><strong style="color:var(--color-primary)">${order.id}</strong></td>
-              <td>${order.order_date.split(' ')[0]}</td>
-              <td>₹${order.total_amount}</td>
-              <td><span class="status-badge ${badgeClass}">${order.status}</span></td>
-              <td><a href="#" class="action-link" onclick="alert('Order tracking detailed view coming soon!')">Track</a></td>
+              <td data-label="Order ID"><strong style="color:var(--color-primary)">${order.id}</strong></td>
+              <td data-label="Date">${order.order_date.split(' ')[0]}</td>
+              <td data-label="Total">₹${order.total_amount}</td>
+              <td data-label="Status"><span class="status-badge ${badgeClass}">${order.status}</span></td>
+              <td data-label="Action"><a href="#" class="action-link" onclick="alert('Order tracking detailed view coming soon!')">Track</a></td>
             </tr>
           `;
         });
