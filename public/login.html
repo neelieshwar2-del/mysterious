@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Customer Authentication | Veerabhadra Pooja Store</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/auth.css">
+</head>
+<body>
+  <!-- Header -->
+  <header>
+    <div class="header-container">
+      <a href="index.html" class="logo">
+        <div class="logo-icon">V</div>
+        <div>
+          <div class="logo-text">Veerabhadra</div>
+          <div class="logo-tagline">Pooja Store</div>
+        </div>
+      </a>
+      <a href="index.html" class="btn btn-secondary btn-sm" style="border-radius: var(--radius-full);">← Back to Store</a>
+    </div>
+  </header>
+
+  <div class="auth-page-wrapper">
+    <div class="auth-container">
+      
+      <!-- Left Side Illustration -->
+      <div class="auth-illustration">
+        <div class="auth-diya-glow"></div>
+        <div class="auth-illustration-content">
+          <h2>Spiritual Journey Begins Here</h2>
+          <p>Sign in to access your saved items, track orders, and experience a seamless connection to tradition.</p>
+        </div>
+      </div>
+
+      <!-- Right Side Forms -->
+      <div class="auth-form-wrapper">
+        
+        <!-- LOGIN PANEL -->
+        <div id="loginPanel" class="auth-panel active">
+          <div class="auth-header">
+            <div class="auth-logo">V</div>
+            <h3>Welcome Back</h3>
+            <p>Sign in to continue your spiritual shopping journey.</p>
+          </div>
+
+          <form id="loginForm" onsubmit="handleLogin(event)">
+            <div class="input-group" id="loginEmailGroup">
+              <input type="email" id="loginEmail" class="input-field" placeholder=" " required oninput="validateEmail(this, 'loginEmailGroup')">
+              <label for="loginEmail" class="input-label">Email Address *</label>
+              <div class="input-error-msg">Please enter a valid email address.</div>
+            </div>
+
+            <div class="input-group" id="loginPasswordGroup">
+              <input type="password" id="loginPassword" class="input-field" placeholder=" " required>
+              <label for="loginPassword" class="input-label">Password *</label>
+              <button type="button" class="password-toggle" onclick="togglePassword('loginPassword')">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+              </button>
+            </div>
+
+            <div class="form-options">
+              <label class="checkbox-container">
+                <input type="checkbox" id="rememberMe">
+                <span class="checkmark"></span>
+                Remember Me
+              </label>
+              <a href="#" class="forgot-link" onclick="switchPanel('forgotPanel')">Forgot Password?</a>
+            </div>
+
+            <button type="submit" id="loginBtn" class="auth-btn">
+              <span class="btn-spinner"></span>
+              <span class="btn-text">Sign In</span>
+            </button>
+            
+            <div id="loginGlobalError" style="color:#e53e3e;font-size:0.85rem;margin-top:10px;text-align:center;display:none;"></div>
+          </form>
+
+          <div class="auth-divider">OR</div>
+          <button type="button" class="social-btn" onclick="handleGoogleLogin()">
+            <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google">
+            Continue with Google
+          </button>
+
+          <div class="auth-bottom">
+            Don't have an account? <span class="auth-link" onclick="switchPanel('registerPanel')">Create Account</span>
+          </div>
+        </div>
+
+        <!-- REGISTER PANEL -->
+        <div id="registerPanel" class="auth-panel hidden">
+          <div class="auth-header">
+            <h3>Create Account</h3>
+            <p>Join us to access exclusive premium features.</p>
+          </div>
+
+          <form id="registerForm" onsubmit="handleRegister(event)">
+            <div class="input-group">
+              <input type="text" id="regName" class="input-field" placeholder=" " required>
+              <label for="regName" class="input-label">Full Name *</label>
+            </div>
+
+            <div class="input-group" id="regEmailGroup">
+              <input type="email" id="regEmail" class="input-field" placeholder=" " required oninput="validateEmail(this, 'regEmailGroup')">
+              <label for="regEmail" class="input-label">Email Address *</label>
+              <div class="input-error-msg">Please enter a valid email address.</div>
+            </div>
+
+            <div class="input-group" id="regPhoneGroup">
+              <input type="tel" id="regPhone" class="input-field" placeholder=" " required oninput="validatePhone(this, 'regPhoneGroup')">
+              <label for="regPhone" class="input-label">Mobile Number *</label>
+              <div class="input-error-msg">Please enter a valid 10-digit number.</div>
+            </div>
+
+            <div class="input-group" id="regPasswordGroup">
+              <input type="password" id="regPassword" class="input-field" placeholder=" " required oninput="validatePassword(this, 'regPasswordGroup')">
+              <label for="regPassword" class="input-label">Password *</label>
+              <button type="button" class="password-toggle" onclick="togglePassword('regPassword')">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+              </button>
+              <div class="input-error-msg">Min 8 chars, 1 uppercase, 1 number, 1 special char.</div>
+            </div>
+
+            <div class="form-options" style="margin-bottom: 1.5rem;">
+              <label class="checkbox-container">
+                <input type="checkbox" id="regTerms" required>
+                <span class="checkmark"></span>
+                I accept the Terms & Conditions
+              </label>
+            </div>
+
+            <button type="submit" id="registerBtn" class="auth-btn">
+              <span class="btn-spinner"></span>
+              <span class="btn-text">Create Account</span>
+            </button>
+            <div id="registerGlobalError" style="color:#e53e3e;font-size:0.85rem;margin-top:10px;text-align:center;display:none;"></div>
+            <div id="registerGlobalSuccess" style="color:#2e7d32;font-size:0.85rem;margin-top:10px;text-align:center;display:none;">Registration successful! Redirecting...</div>
+          </form>
+
+          <div class="auth-bottom">
+            Already have an account? <span class="auth-link" onclick="switchPanel('loginPanel')">Sign In</span>
+          </div>
+        </div>
+
+        <!-- FORGOT PASSWORD PANEL -->
+        <div id="forgotPanel" class="auth-panel hidden">
+          <div class="auth-header">
+            <h3>Reset Password</h3>
+            <p>Enter your email to receive a reset link.</p>
+          </div>
+
+          <form id="forgotForm" onsubmit="handleForgot(event)">
+            <div class="input-group" id="forgotEmailGroup">
+              <input type="email" id="forgotEmail" class="input-field" placeholder=" " required oninput="validateEmail(this, 'forgotEmailGroup')">
+              <label for="forgotEmail" class="input-label">Email Address *</label>
+              <div class="input-error-msg">Please enter a valid email address.</div>
+            </div>
+
+            <button type="submit" id="forgotBtn" class="auth-btn">
+              <span class="btn-spinner"></span>
+              <span class="btn-text">Send Reset Link</span>
+            </button>
+            <div id="forgotGlobalError" style="color:#e53e3e;font-size:0.85rem;margin-top:10px;text-align:center;display:none;"></div>
+            <div id="forgotGlobalSuccess" style="color:#2e7d32;font-size:0.85rem;margin-top:10px;text-align:center;display:none;">Reset link sent successfully! Check your inbox.</div>
+          </form>
+
+          <div class="auth-bottom" style="margin-top: 1rem;">
+            <span class="auth-link" onclick="switchPanel('loginPanel')">← Back to Login</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase-config.js"></script>
+  <script src="js/auth.js"></script>
+</body>
+</html>

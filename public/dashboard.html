@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Dashboard | Veerabhadra Pooja Store</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+</head>
+<body>
+  <!-- Header -->
+  <header>
+    <div class="header-container">
+      <a href="index.html" class="logo">
+        <div class="logo-icon">V</div>
+        <div>
+          <div class="logo-text">Veerabhadra</div>
+          <div class="logo-tagline">Pooja Store</div>
+        </div>
+      </a>
+      
+      <div class="nav-actions">
+        <a href="index.html" class="btn btn-secondary btn-sm" style="border-radius: var(--radius-full);">← Back to Store</a>
+        <button class="btn btn-sm" style="background:#e53e3e; color:white;" onclick="logout()">Logout</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="dashboard-page">
+    <div class="dashboard-container">
+      
+      <!-- Sidebar Navigation -->
+      <aside class="dashboard-sidebar">
+        <div class="user-profile-brief">
+          <div class="avatar" id="userAvatar">U</div>
+          <h3 id="userNameDisplay">Loading...</h3>
+          <p id="userEmailDisplay">loading@email.com</p>
+        </div>
+        
+        <ul class="dashboard-nav">
+          <li>
+            <a href="#" class="active">
+              <svg class="nav-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+              Dashboard
+            </a>
+          </li>
+          <li>
+            <a href="#">
+              <svg class="nav-icon" viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+              My Orders
+            </a>
+          </li>
+          <li>
+            <a href="#">
+              <svg class="nav-icon" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+              Wishlist <span style="margin-left:auto; background:var(--color-bg); padding:2px 8px; border-radius:10px; font-size:0.75rem;">Soon</span>
+            </a>
+          </li>
+          <li>
+            <a href="#">
+              <svg class="nav-icon" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+              Saved Addresses <span style="margin-left:auto; background:var(--color-bg); padding:2px 8px; border-radius:10px; font-size:0.75rem;">Soon</span>
+            </a>
+          </li>
+          <li>
+            <a href="#">
+              <svg class="nav-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+              Profile Settings
+            </a>
+          </li>
+        </ul>
+      </aside>
+
+      <!-- Main Content -->
+      <main class="dashboard-main">
+        
+        <!-- Welcome Banner -->
+        <div class="welcome-banner">
+          <h1 id="welcomeMessage">Welcome back!</h1>
+          <p>Track your orders, manage your addresses, and explore our spiritual collection.</p>
+        </div>
+
+        <!-- Overview Cards -->
+        <div class="overview-grid">
+          <div class="overview-card">
+            <div class="overview-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+            </div>
+            <div class="overview-info">
+              <h4>Total Orders</h4>
+              <p id="totalOrdersCount">0</p>
+            </div>
+          </div>
+          
+          <div class="overview-card">
+            <div class="overview-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+            </div>
+            <div class="overview-info">
+              <h4>Reward Points</h4>
+              <p>250 <span style="font-size:0.7rem; color:var(--color-primary); font-weight:normal;">Coming Soon</span></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Orders Section -->
+        <div class="dashboard-section">
+          <div class="section-header">
+            <h3>Recent Orders</h3>
+            <a href="#" class="action-link">View All</a>
+          </div>
+          
+          <div style="overflow-x:auto;">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Order ID</th>
+                  <th>Date</th>
+                  <th>Total</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="ordersTableBody">
+                <!-- Data will be loaded here via JS -->
+                <tr><td colspan="5" style="text-align:center; color:#666;">Loading orders...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase-config.js"></script>
+  <script>
+    let currentUser = null;
+
+    // Check auth state on load
+    window.addEventListener('DOMContentLoaded', async () => {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      
+      if (!session) {
+        window.location.href = 'login.html';
+        return;
+      }
+      
+      currentUser = session.user;
+      
+      // Populate UI
+      const name = currentUser.user_metadata?.full_name || 'Customer';
+      document.getElementById('welcomeMessage').textContent = `Welcome back, ${name.split(' ')[0]}!`;
+      document.getElementById('userNameDisplay').textContent = name;
+      document.getElementById('userEmailDisplay').textContent = currentUser.email;
+      document.getElementById('userAvatar').textContent = name.charAt(0).toUpperCase();
+
+      loadUserOrders();
+    });
+
+    async function loadUserOrders() {
+      // Because we store orders by phone number (from WhatsApp) and not auth UUID right now, 
+      // we'll attempt to match orders where customer_name roughly matches, or email if we had it.
+      // For this preview, we'll fetch orders matching the user's phone if available in metadata.
+      const phone = currentUser.user_metadata?.phone;
+      
+      const tbody = document.getElementById('ordersTableBody');
+      const countEl = document.getElementById('totalOrdersCount');
+
+      if (!phone) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No orders found linked to this account.</td></tr>';
+        return;
+      }
+
+      try {
+        const { data, error } = await supabaseClient
+          .from('orders')
+          .select('*')
+          .eq('mobile_number', phone)
+          .order('created_at', { ascending: false })
+          .limit(5);
+
+        if (error) throw error;
+
+        countEl.textContent = data.length;
+
+        if (data.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No orders placed yet. <a href="products.html" class="action-link">Start shopping</a></td></tr>';
+          return;
+        }
+
+        let html = '';
+        data.forEach(order => {
+          let badgeClass = 'status-pending';
+          if(order.status === 'Delivered') badgeClass = 'status-delivered';
+          if(order.status === 'Packed' || order.status === 'Ready for Pickup') badgeClass = 'status-shipped';
+
+          html += `
+            <tr>
+              <td><strong style="color:var(--color-primary)">${order.id}</strong></td>
+              <td>${order.order_date.split(' ')[0]}</td>
+              <td>₹${order.total_amount}</td>
+              <td><span class="status-badge ${badgeClass}">${order.status}</span></td>
+              <td><a href="#" class="action-link" onclick="alert('Order tracking detailed view coming soon!')">Track</a></td>
+            </tr>
+          `;
+        });
+        
+        tbody.innerHTML = html;
+
+      } catch (err) {
+        console.error('Failed to load orders', err);
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:red;">Failed to load orders.</td></tr>';
+      }
+    }
+
+    async function logout() {
+      await supabaseClient.auth.signOut();
+      window.location.href = 'login.html';
+    }
+  </script>
+</body>
+</html>

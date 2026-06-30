@@ -10,7 +10,18 @@ document.addEventListener('DOMContentLoaded', () => {
   initCart();
   initBookingForm();
   updateActiveNavLink();
+  checkAuthState();
 });
+
+async function checkAuthState() {
+  if (typeof supabaseClient === 'undefined') return;
+  const { data: { session } } = await supabaseClient.auth.getSession();
+  const authBtn = document.getElementById('navAuthBtn');
+  if (session && authBtn) {
+    authBtn.textContent = 'My Account';
+    authBtn.href = 'dashboard.html';
+  }
+}
 
 // 1. Mobile Menu Functionality
 function initMobileMenu() {
