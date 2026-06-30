@@ -3,6 +3,7 @@
 const WHATSAPP_PHONE = '919908563384'; // Store Owner WhatsApp Number (with country code, no + or spaces)
 // Cart State Management
 let cart = [];
+let isLoggedIn = false;
 
 // Initialize Page
 document.addEventListener('DOMContentLoaded', () => {
@@ -16,10 +17,26 @@ document.addEventListener('DOMContentLoaded', () => {
 async function checkAuthState() {
   if (typeof supabaseClient === 'undefined') return;
   const { data: { session } } = await supabaseClient.auth.getSession();
+  isLoggedIn = !!session;
   const authBtn = document.getElementById('navAuthBtn');
-  if (session && authBtn) {
-    authBtn.textContent = 'My Account';
-    authBtn.href = 'dashboard.html';
+  const cartTrigger = document.querySelector('.cart-trigger');
+  
+  if (session) {
+    if (authBtn) {
+      authBtn.textContent = 'My Account';
+      authBtn.href = 'dashboard.html';
+    }
+    if (cartTrigger) {
+      cartTrigger.style.display = 'flex';
+    }
+  } else {
+    if (authBtn) {
+      authBtn.textContent = 'Sign In';
+      authBtn.href = 'login.html';
+    }
+    if (cartTrigger) {
+      cartTrigger.style.display = 'none';
+    }
   }
 }
 
@@ -120,6 +137,12 @@ function bindAddToCartButtons() {
   addButtons.forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.preventDefault();
+      
+      if (!isLoggedIn) {
+        window.location.href = 'login.html';
+        return;
+      }
+
       const id = btn.getAttribute('data-id');
       const name = btn.getAttribute('data-name');
       const price = parseFloat(btn.getAttribute('data-price'));
