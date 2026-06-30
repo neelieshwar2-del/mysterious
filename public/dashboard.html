@@ -39,13 +39,13 @@
         
         <ul class="dashboard-nav">
           <li>
-            <a href="#" class="active">
+            <a href="#" id="tabOrders" class="active" onclick="switchDashboardTab('orders')">
               <svg class="nav-icon" viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
               My Orders
             </a>
           </li>
           <li>
-            <a href="#">
+            <a href="#" id="tabProfile" onclick="switchDashboardTab('profile')">
               <svg class="nav-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
               Profile Settings
             </a>
@@ -76,29 +76,62 @@
 
         </div>
 
-        <!-- Recent Orders Section -->
-        <div class="dashboard-section">
-          <div class="section-header">
-            <h3>Recent Orders</h3>
-            <a href="#" class="action-link">View All</a>
+        <div id="ordersSection">
+          <!-- Recent Orders Section -->
+          <div class="dashboard-section">
+            <div class="section-header">
+              <h3>Recent Orders</h3>
+              <a href="#" class="action-link">View All</a>
+            </div>
+            
+            <div style="overflow-x:auto;">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Order ID</th>
+                    <th>Date</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="ordersTableBody">
+                  <!-- Data will be loaded here via JS -->
+                  <tr><td colspan="5" style="text-align:center; color:#666;">Loading orders...</td></tr>
+                </tbody>
+              </table>
+            </div>
           </div>
-          
-          <div style="overflow-x:auto;">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Order ID</th>
-                  <th>Date</th>
-                  <th>Total</th>
-                  <th>Status</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody id="ordersTableBody">
-                <!-- Data will be loaded here via JS -->
-                <tr><td colspan="5" style="text-align:center; color:#666;">Loading orders...</td></tr>
-              </tbody>
-            </table>
+        </div>
+
+        <!-- Profile Settings Section -->
+        <div id="profileSection" style="display:none;">
+          <div class="dashboard-section">
+            <div class="section-header">
+              <h3>Profile Settings</h3>
+            </div>
+            
+            <form id="profileForm" onsubmit="handleProfileUpdate(event)" style="max-width: 500px;">
+              <div class="input-group" style="margin-bottom: 1.5rem; position: relative;">
+                <label style="display:block; margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--color-text-light); font-weight:600;">Full Name</label>
+                <input type="text" id="profileName" class="input-field" style="width: 100%; padding: 12px; border: 1.5px solid rgba(0,0,0,0.1); border-radius: var(--radius-sm);" required>
+              </div>
+              
+              <div class="input-group" style="margin-bottom: 1.5rem; position: relative;">
+                <label style="display:block; margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--color-text-light); font-weight:600;">Mobile Number</label>
+                <input type="tel" id="profilePhone" class="input-field" style="width: 100%; padding: 12px; border: 1.5px solid rgba(0,0,0,0.1); border-radius: var(--radius-sm);" required>
+              </div>
+
+              <div class="input-group" style="margin-bottom: 2rem; position: relative;">
+                <label style="display:block; margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--color-text-light); font-weight:600;">Email Address (Cannot be changed)</label>
+                <input type="email" id="profileEmail" class="input-field" style="width: 100%; padding: 12px; border: 1.5px solid rgba(0,0,0,0.1); border-radius: var(--radius-sm); background: #f5f5f5; color:#666;" disabled>
+              </div>
+              
+              <button type="submit" id="profileUpdateBtn" class="btn btn-primary" style="width: 100%; justify-content:center;">
+                Update Profile
+              </button>
+              <div id="profileStatusMsg" style="margin-top: 15px; font-size: 0.9rem; display:none; text-align:center;"></div>
+            </form>
           </div>
         </div>
 
@@ -124,10 +157,17 @@
       
       // Populate UI
       const name = currentUser.user_metadata?.full_name || 'Customer';
+      const phone = currentUser.user_metadata?.phone || '';
+
       document.getElementById('welcomeMessage').textContent = `Welcome back, ${name.split(' ')[0]}!`;
       document.getElementById('userNameDisplay').textContent = name;
       document.getElementById('userEmailDisplay').textContent = currentUser.email;
       document.getElementById('userAvatar').textContent = name.charAt(0).toUpperCase();
+
+      // Populate Settings form
+      document.getElementById('profileName').value = name;
+      document.getElementById('profilePhone').value = phone;
+      document.getElementById('profileEmail').value = currentUser.email;
 
       loadUserOrders();
     });
@@ -191,6 +231,72 @@
     async function logout() {
       await supabaseClient.auth.signOut();
       window.location.href = 'login.html';
+    }
+
+    // Tab Switching
+    function switchDashboardTab(tab) {
+      if (tab === 'orders') {
+        document.getElementById('ordersSection').style.display = 'block';
+        document.getElementById('profileSection').style.display = 'none';
+        document.getElementById('tabOrders').classList.add('active');
+        document.getElementById('tabProfile').classList.remove('active');
+      } else if (tab === 'profile') {
+        document.getElementById('ordersSection').style.display = 'none';
+        document.getElementById('profileSection').style.display = 'block';
+        document.getElementById('tabProfile').classList.add('active');
+        document.getElementById('tabOrders').classList.remove('active');
+      }
+    }
+
+    // Profile Update Handling
+    async function handleProfileUpdate(e) {
+      e.preventDefault();
+      
+      const newName = document.getElementById('profileName').value;
+      const newPhone = document.getElementById('profilePhone').value;
+      const btn = document.getElementById('profileUpdateBtn');
+      const msg = document.getElementById('profileStatusMsg');
+      
+      // Basic validation
+      if (!/^[0-9]{10}$/.test(newPhone)) {
+        msg.textContent = 'Please enter a valid 10-digit mobile number.';
+        msg.style.color = '#e53e3e';
+        msg.style.display = 'block';
+        return;
+      }
+
+      btn.textContent = 'Updating...';
+      btn.disabled = true;
+      msg.style.display = 'none';
+
+      try {
+        const { data, error } = await supabaseClient.auth.updateUser({
+          data: {
+            full_name: newName,
+            phone: newPhone
+          }
+        });
+
+        if (error) throw error;
+
+        // Update successful
+        msg.textContent = 'Profile updated successfully!';
+        msg.style.color = '#2e7d32';
+        msg.style.display = 'block';
+        
+        // Update sidebar
+        document.getElementById('userNameDisplay').textContent = newName;
+        document.getElementById('welcomeMessage').textContent = `Welcome back, ${newName.split(' ')[0]}!`;
+        document.getElementById('userAvatar').textContent = newName.charAt(0).toUpperCase();
+        
+      } catch (err) {
+        msg.textContent = err.message || 'Failed to update profile.';
+        msg.style.color = '#e53e3e';
+        msg.style.display = 'block';
+      } finally {
+        btn.textContent = 'Update Profile';
+        btn.disabled = false;
+      }
     }
   </script>
 </body>
