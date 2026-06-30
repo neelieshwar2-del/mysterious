@@ -55,7 +55,7 @@ function validatePhone(input, groupClassId) {
 
 function validatePassword(input, groupClassId) {
   // Min 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special char
-  const passRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+  const passRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z\d]).{8,}$/;
   const group = document.getElementById(groupClassId);
   if (input.value && !passRegex.test(input.value)) {
     group.classList.add('error');
@@ -148,13 +148,30 @@ async function handleRegister(e) {
 
     if (error) throw error;
     
-    successEl.style.display = 'block';
-    setTimeout(() => {
-      window.location.href = 'dashboard.html';
-    }, 1500);
+    if (data.session === null) {
+      // Email confirmation is required
+      successEl.textContent = 'Registration successful! Please check your email inbox to confirm your account.';
+      successEl.style.display = 'block';
+      setLoading('registerBtn', false);
+      
+      // Optionally reset form
+      document.getElementById('registerForm').reset();
+    } else {
+      // Auto logged in
+      successEl.textContent = 'Registration successful! Redirecting...';
+      successEl.style.display = 'block';
+      setTimeout(() => {
+        window.location.href = 'dashboard.html';
+      }, 1500);
+    }
 
   } catch (err) {
-    errorEl.textContent = err.message || 'Failed to create account.';
+    // Check for rate limit specifically
+    if (err.message && err.message.toLowerCase().includes('rate limit')) {
+      errorEl.textContent = 'Too many requests. Please try again later.';
+    } else {
+      errorEl.textContent = err.message || 'Failed to create account.';
+    }
     errorEl.style.display = 'block';
     setLoading('registerBtn', false);
   }
