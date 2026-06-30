@@ -1040,6 +1040,15 @@ function triggerNotificationIfApplicable(order, status) {
   console.log(`[Notification Subsystem] Dispatching WhatsApp Notification for ${order.id}:`);
   console.log(`To: ${order.mobileNumber}`);
   console.log(`Message:\n${message}`);
+
+  // Actually open WhatsApp so the admin can send the message
+  let customerPhone = order.mobileNumber.replace(/\D/g, '');
+  if (customerPhone.length === 10) {
+    customerPhone = '91' + customerPhone;
+  }
+  const encodedText = encodeURIComponent(message);
+  const whatsappUrl = `https://wa.me/${customerPhone}?text=${encodedText}`;
+  window.open(whatsappUrl, '_blank');
   
   return true;
 }
