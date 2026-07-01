@@ -105,7 +105,7 @@ async function handleLogin(e) {
     if (error) throw error;
     
     // Redirect to dashboard on success
-    window.location.href = 'dashboard.html';
+    window.location.replace('dashboard.html');
 
   } catch (err) {
     errorEl.textContent = err.message || 'Failed to sign in.';
@@ -221,6 +221,6 @@ function handleGoogleLogin() {
 window.addEventListener('DOMContentLoaded', async () => {
   const { data: { session } } = await supabaseClient.auth.getSession();
   if (session) {
-    window.location.href = 'dashboard.html';
+    window.location.replace('dashboard.html');
   }
 });
