@@ -19,28 +19,34 @@ async function checkAuthState() {
   const { data: { session } } = await supabaseClient.auth.getSession();
   isLoggedIn = !!session;
   const authBtn = document.getElementById('navAuthBtn');
+  const mobileAuthLink = document.getElementById('mobileAuthLink');
   const cartTrigger = document.querySelector('.cart-trigger');
   
   if (session) {
     if (authBtn) {
-      const userName = session.user?.user_metadata?.full_name || session.user?.email || 'User';
-      const avatarUrl = session.user?.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=F37022&color=fff&rounded=true`;
-      
-      authBtn.innerHTML = `<img src="${avatarUrl}" alt="Profile" style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 2px solid var(--color-primary); display: block; box-shadow: var(--shadow-sm);">`;
-      authBtn.style.padding = '0';
-      authBtn.style.background = 'transparent';
-      authBtn.style.borderColor = 'transparent';
-      authBtn.href = 'dashboard.html';
+      // Hide the auth button/profile icon from the top navbar when logged in
+      authBtn.style.display = 'none';
+    }
+    if (mobileAuthLink) {
+      // Show Settings option in the mobile sidebar
+      mobileAuthLink.innerHTML = `Settings`;
+      mobileAuthLink.href = 'dashboard.html';
     }
     if (cartTrigger) {
       cartTrigger.style.display = 'flex';
     }
   } else {
     if (authBtn) {
+      authBtn.style.display = 'inline-flex';
       authBtn.textContent = 'Sign In';
       authBtn.href = 'login.html';
       authBtn.className = 'btn btn-secondary btn-sm';
-      authBtn.style = 'border-radius: var(--radius-full); padding: 0.4rem 1rem;';
+      authBtn.style.borderRadius = 'var(--radius-full)';
+      authBtn.style.padding = '0.4rem 1rem';
+    }
+    if (mobileAuthLink) {
+      mobileAuthLink.innerHTML = `Sign In`;
+      mobileAuthLink.href = 'login.html';
     }
     if (cartTrigger) {
       cartTrigger.style.display = 'none';
