@@ -23,7 +23,13 @@ async function checkAuthState() {
   
   if (session) {
     if (authBtn) {
-      authBtn.textContent = 'My Account';
+      const userName = session.user?.user_metadata?.full_name || session.user?.email || 'User';
+      const avatarUrl = session.user?.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=F37022&color=fff&rounded=true`;
+      
+      authBtn.innerHTML = `<img src="${avatarUrl}" alt="Profile" style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 2px solid var(--color-primary); display: block; box-shadow: var(--shadow-sm);">`;
+      authBtn.style.padding = '0';
+      authBtn.style.background = 'transparent';
+      authBtn.style.borderColor = 'transparent';
       authBtn.href = 'dashboard.html';
     }
     if (cartTrigger) {
@@ -33,6 +39,8 @@ async function checkAuthState() {
     if (authBtn) {
       authBtn.textContent = 'Sign In';
       authBtn.href = 'login.html';
+      authBtn.className = 'btn btn-secondary btn-sm';
+      authBtn.style = 'border-radius: var(--radius-full); padding: 0.4rem 1rem;';
     }
     if (cartTrigger) {
       cartTrigger.style.display = 'none';
