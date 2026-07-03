@@ -449,15 +449,11 @@
 @media (max-width: 900px) {
   .auth-container {
     flex-direction: column;
+    max-width: 500px;
   }
   
   .auth-illustration {
-    padding: 3rem 2rem;
-    align-items: center;
-  }
-  
-  .auth-illustration h2 {
-    font-size: 2rem;
+    display: none;
   }
   
   .auth-form-wrapper {
