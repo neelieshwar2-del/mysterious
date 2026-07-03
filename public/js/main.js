@@ -294,19 +294,37 @@ async function saveOrderToStorage(orderData) {
                     String(now.getMinutes()).padStart(2, '0') + ' ' + 
                     (now.getHours() >= 12 ? 'PM' : 'AM');
 
+    // Get the logged-in user's ID to link order to their account
+    let userId = null;
+    try {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      if (session && session.user) {
+        userId = session.user.id;
+      }
+    } catch (e) {
+      console.log('Could not get user ID for order:', e);
+    }
+
+    const insertData = {
+      customer_name: orderData.customerName || 'WhatsApp Customer',
+      mobile_number: orderData.mobileNumber || 'Via WhatsApp',
+      address: orderData.address || 'Provided via WhatsApp',
+      order_date: dateStr,
+      items: orderData.items || [],
+      total_amount: orderData.totalAmount || 0,
+      payment_method: orderData.paymentMethod || 'UPI/Cash',
+      status: 'Pending',
+      notification_history: []
+    };
+
+    // Add user_id if logged in
+    if (userId) {
+      insertData.user_id = userId;
+    }
+
     const { data, error } = await supabaseClient
       .from('orders')
-      .insert({
-        customer_name: orderData.customerName || 'WhatsApp Customer',
-        mobile_number: orderData.mobileNumber || 'Via WhatsApp',
-        address: orderData.address || 'Provided via WhatsApp',
-        order_date: dateStr,
-        items: orderData.items || [],
-        total_amount: orderData.totalAmount || 0,
-        payment_method: orderData.paymentMethod || 'UPI/Cash',
-        status: 'Pending',
-        notification_history: []
-      })
+      .insert(insertData)
       .select();
 
     if (!error && data && data.length > 0) {

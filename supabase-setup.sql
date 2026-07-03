@@ -17,6 +17,7 @@ $$ LANGUAGE plpgsql;
 -- 3. Create orders table
 CREATE TABLE IF NOT EXISTS orders (
   id TEXT PRIMARY KEY DEFAULT generate_order_id(),
+  user_id TEXT,
   customer_name TEXT NOT NULL DEFAULT 'WhatsApp Customer',
   mobile_number TEXT DEFAULT 'Via WhatsApp',
   address TEXT DEFAULT 'Provided via WhatsApp',

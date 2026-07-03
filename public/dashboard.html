@@ -178,38 +178,52 @@
     });
 
     async function loadUserOrders() {
-      // Because we store orders by phone number (from WhatsApp) and not auth UUID right now, 
-      // we'll attempt to match orders where customer_name roughly matches, or email if we had it.
-      // For this preview, we'll fetch orders matching the user's phone if available in metadata.
-      const phone = currentUser.user_metadata?.phone;
-      
       const tbody = document.getElementById('ordersTableBody');
       const countEl = document.getElementById('totalOrdersCount');
-
-      if (!phone) {
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No orders found linked to this account.</td></tr>';
-        return;
-      }
+      const userId = currentUser.id;
+      const phone = currentUser.user_metadata?.phone;
 
       try {
-        const { data, error } = await supabaseClient
+        // Query orders by user_id (primary) or by mobile_number (fallback for legacy orders)
+        let allOrders = [];
+
+        // Primary: fetch orders linked to this user's account
+        const { data: userOrders, error: err1 } = await supabaseClient
           .from('orders')
           .select('*')
-          .eq('mobile_number', phone)
-          .order('created_at', { ascending: false })
-          .limit(5);
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false });
 
-        if (error) throw error;
+        if (!err1 && userOrders) {
+          allOrders = [...userOrders];
+        }
 
-        countEl.textContent = data.length;
+        // Fallback: also fetch any legacy orders matching phone (that don't have user_id set)
+        if (phone) {
+          const { data: phoneOrders, error: err2 } = await supabaseClient
+            .from('orders')
+            .select('*')
+            .eq('mobile_number', phone)
+            .is('user_id', null)
+            .order('created_at', { ascending: false });
 
-        if (data.length === 0) {
+          if (!err2 && phoneOrders) {
+            allOrders = [...allOrders, ...phoneOrders];
+          }
+        }
+
+        // Sort all orders by created_at descending
+        allOrders.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+        countEl.textContent = allOrders.length;
+
+        if (allOrders.length === 0) {
           tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No orders placed yet. <a href="products.html" class="action-link">Start shopping</a></td></tr>';
           return;
         }
 
         let html = '';
-        data.forEach(order => {
+        allOrders.forEach(order => {
           let badgeClass = 'status-pending';
           if(order.status === 'Delivered') badgeClass = 'status-delivered';
           if(order.status === 'Packed' || order.status === 'Ready for Pickup') badgeClass = 'status-shipped';
