@@ -24,8 +24,10 @@ async function checkAuthState() {
   
   if (session) {
     if (authBtn) {
-      // Hide the auth button/profile icon from the top navbar when logged in
-      authBtn.style.display = 'none';
+      // Show Settings button on desktop navbar when logged in
+      authBtn.style.display = 'inline-flex';
+      authBtn.textContent = '⚙ Settings';
+      authBtn.href = 'dashboard.html';
     }
     if (mobileAuthLink) {
       // Show Settings option in the mobile sidebar
