@@ -313,7 +313,7 @@ async function saveOrderToStorage(orderData) {
       items: orderData.items || [],
       total_amount: orderData.totalAmount || 0,
       payment_method: orderData.paymentMethod || 'UPI/Cash',
-      status: 'Pending',
+      status: orderData.status || 'Pending',
       notification_history: []
     };
 
@@ -395,6 +395,67 @@ function showToast(message) {
   setTimeout(() => toast.remove(), 4000);
 }
 
+// Confirmation overlay helper for WhatsApp redirects
+function showWhatsAppConfirmationModal(orderId, isRental = false, onConfirm = null) {
+  const existing = document.getElementById('whatsappConfirmModal');
+  if (existing) existing.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'whatsappConfirmModal';
+  modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.65);display:flex;align-items:center;justify-content:center;z-index:20000;backdrop-filter:blur(4px);';
+  modal.innerHTML = `
+    <div style="background:#fff;border-radius:16px;padding:32px 24px;width:90%;max-width:400px;box-shadow:0 24px 64px rgba(0,0,0,0.3);font-family:'Outfit',sans-serif;text-align:center;">
+      <div style="font-size:3rem;margin-bottom:12px;">💬</div>
+      <h3 style="margin:0 0 10px;font-size:1.3rem;color:#1a1a2e;font-weight:700;">Sent the message?</h3>
+      <p style="margin:0 0 24px;font-size:0.88rem;line-height:1.5;color:#555;">We opened WhatsApp for you. Please click <strong>"Yes, I Sent It"</strong> below ONLY after you successfully send the message to complete your order.</p>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <button id="confirmWhatsAppSent" style="padding:12px;border:none;border-radius:8px;background:linear-gradient(135deg,#e8630a,#ff8c42);color:#fff;font-size:0.9rem;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 4px 12px rgba(232,99,10,0.25);">Yes, I Sent It</button>
+        <button id="cancelWhatsAppOrder" style="padding:10px;border:1.5px solid #eee;border-radius:8px;background:#fff;color:#777;font-size:0.85rem;font-weight:600;cursor:pointer;font-family:inherit;transition:background 0.2s;" onmouseover="this.style.background='#fafafa'" onmouseout="this.style.background='#fff'">No, Cancel Order</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  document.getElementById('confirmWhatsAppSent').onclick = async () => {
+    try {
+      showToast('Processing order...');
+      const { error } = await supabaseClient
+        .from('orders')
+        .update({ status: 'Pending' })
+        .eq('id', orderId);
+
+      if (error) throw error;
+      
+      showToast('Order placed successfully!');
+      if (onConfirm) onConfirm();
+    } catch (e) {
+      console.error('Error confirming order:', e);
+      showToast('Order confirmed locally.');
+      if (onConfirm) onConfirm();
+    } finally {
+      modal.remove();
+    }
+  };
+
+  document.getElementById('cancelWhatsAppOrder').onclick = async () => {
+    if (confirm("Are you sure you want to cancel this order request? Your cart will be preserved.")) {
+      try {
+        showToast('Cancelling order...');
+        await supabaseClient
+          .from('orders')
+          .delete()
+          .eq('id', orderId);
+        
+        showToast('Order request cancelled.');
+      } catch (e) {
+        console.error('Error deleting draft order:', e);
+      } finally {
+        modal.remove();
+      }
+    }
+  };
+}
+
 // Checkout Flow
 window.checkoutWhatsApp = () => {
   if (cart.length === 0) return;
@@ -414,7 +475,8 @@ window.checkoutWhatsApp = () => {
         price: item.price,
         quantity: item.qty
       })),
-      totalAmount: total
+      totalAmount: total,
+      status: 'Draft'
     });
 
     let message = `Hello! I would like to order the following items from your Pooja Store:\n\n`;
@@ -436,11 +498,14 @@ window.checkoutWhatsApp = () => {
     const whatsappUrl = `https://wa.me/${WHATSAPP_PHONE}?text=${encodedText}`;
     window.open(whatsappUrl, '_blank');
 
-    // Clear cart
-    cart = [];
-    saveCart();
-    updateCartBadge();
-    renderCart();
+    // Show confirmation modal
+    showWhatsAppConfirmationModal(orderId, false, () => {
+      // Clear cart ONLY when successfully confirmed
+      cart = [];
+      saveCart();
+      updateCartBadge();
+      renderCart();
+    });
   });
 };
 
@@ -453,7 +518,8 @@ window.orderDirect = (name, price) => {
         mobileNumber: customer.phone,
         address: customer.address,
         items: [{ name: name, price: price, quantity: 1 }],
-        totalAmount: price
+        totalAmount: price,
+        status: 'Draft'
       });
 
       let message = `Hello! I want to order the following item:\n\n`;
@@ -468,6 +534,9 @@ window.orderDirect = (name, price) => {
       const encodedText = encodeURIComponent(message);
       const whatsappUrl = `https://wa.me/${WHATSAPP_PHONE}?text=${encodedText}`;
       window.open(whatsappUrl, '_blank');
+
+      // Show confirmation modal
+      showWhatsAppConfirmationModal(orderId, false);
     });
   } else {
     // For inquiries (no price), just open WhatsApp directly
@@ -512,7 +581,8 @@ function initBookingForm() {
         address: address,
         items: [{ name: 'Vratam Peta Setup Kit', price: 299, quantity: duration }],
         totalAmount: totalAmount,
-        paymentMethod: 'UPI/Cash'
+        paymentMethod: 'UPI/Cash',
+        status: 'Draft'
       });
 
       let message = `Hello! I would like to book a *Vratam Peta Rental* package:\n\n`;
@@ -527,6 +597,12 @@ function initBookingForm() {
       const encodedText = encodeURIComponent(message);
       const whatsappUrl = `https://wa.me/${WHATSAPP_PHONE}?text=${encodedText}`;
       window.open(whatsappUrl, '_blank');
+
+      // Show confirmation modal
+      showWhatsAppConfirmationModal(orderId, true, () => {
+        // Reset form upon successful verification
+        form.reset();
+      });
     });
   }
 }

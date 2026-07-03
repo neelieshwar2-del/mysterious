@@ -355,6 +355,7 @@ async function initData() {
     const { data, error } = await supabaseClient
       .from('orders')
       .select('*')
+      .neq('status', 'Draft')
       .order('created_at', { ascending: false });
 
     if (!error && data) {
