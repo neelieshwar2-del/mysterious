@@ -421,8 +421,7 @@ window.checkoutWhatsApp = () => {
     message += `*ORDER ID:* ${orderId}\n\n`;
     message += `*CUSTOMER DETAILS:*\n`;
     message += `- *Name:* ${customer.name}\n`;
-    message += `- *Phone:* ${customer.phone}\n`;
-    message += `- *Address:* ${customer.address}\n\n`;
+    message += `- *Phone:* ${customer.phone}\n\n`;
     message += `*ORDER DETAILS:*\n`;
 
     cart.forEach((item, index) => {
@@ -461,8 +460,7 @@ window.orderDirect = (name, price) => {
       message += `*ORDER ID:* ${orderId}\n\n`;
       message += `*CUSTOMER DETAILS:*\n`;
       message += `- *Name:* ${customer.name}\n`;
-      message += `- *Phone:* ${customer.phone}\n`;
-      message += `- *Address:* ${customer.address}\n\n`;
+      message += `- *Phone:* ${customer.phone}\n\n`;
       message += `*Product:* ${name}\n`;
       message += `*Price:* ₹${price}\n`;
       message += `\nPlease confirm availability. Thank you!`;
@@ -523,8 +521,7 @@ function initBookingForm() {
       message += `- *Name:* ${name}\n`;
       message += `- *Phone:* ${phone}\n`;
       message += `- *Booking Date:* ${date}\n`;
-      message += `- *Duration:* ${duration} Day(s)\n`;
-      message += `- *Delivery Address:* ${address}\n\n`;
+      message += `- *Duration:* ${duration} Day(s)\n\n`;
       message += `Please confirm booking availability and details. Thank you!`;
 
       const encodedText = encodeURIComponent(message);
