@@ -363,11 +363,88 @@ async function showCustomerDetailsModal(callback) {
       // Profile is complete — proceed directly without any popup
       callback({ name, phone, address: 'Provided via Profile' });
     } else {
-      // Profile is incomplete — show a toast and redirect to settings
-      showToast('Please complete your profile (Name & Phone) in Settings before placing an order.');
+      // Profile is incomplete — show modal to collect missing details
+      const existing = document.getElementById('collectDetailsModal');
+      if (existing) existing.remove();
+
+      const modal = document.createElement('div');
+      modal.id = 'collectDetailsModal';
+      modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:10000;backdrop-filter:blur(4px);';
+      modal.innerHTML = `
+        <div style="background:#fff;border-radius:16px;padding:28px 24px;width:90%;max-width:400px;box-shadow:0 20px 60px rgba(0,0,0,0.3);font-family:'Outfit',sans-serif;">
+          <h3 style="margin:0 0 6px;font-size:1.25rem;color:#1a1a2e;font-weight:700;">📋 Complete Your Details</h3>
+          <p style="margin:0 0 18px;font-size:0.85rem;color:#666;">Please provide your mobile number to complete your order. This will be saved to your profile.</p>
+          <div style="margin-bottom:14px;">
+            <label style="display:block;font-size:0.8rem;font-weight:600;color:#333;margin-bottom:4px;">Full Name *</label>
+            <input type="text" id="custName" value="${name}" placeholder="Enter your full name" required
+              style="width:100%;padding:10px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:0.9rem;font-family:inherit;box-sizing:border-box;outline:none;transition:border 0.2s;"
+              onfocus="this.style.borderColor='#e8630a'" onblur="this.style.borderColor='#ddd'">
+          </div>
+          <div style="margin-bottom:18px;">
+            <label style="display:block;font-size:0.8rem;font-weight:600;color:#333;margin-bottom:4px;">Phone Number *</label>
+            <input type="tel" id="custPhone" value="${phone}" placeholder="Enter 10-digit mobile number" required
+              style="width:100%;padding:10px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:0.9rem;font-family:inherit;box-sizing:border-box;outline:none;transition:border 0.2s;"
+              onfocus="this.style.borderColor='#e8630a'" onblur="this.style.borderColor='#ddd'">
+          </div>
+          <div id="custError" style="color:#e53e3e;font-size:0.8rem;margin-bottom:10px;display:none;"></div>
+          <div style="display:flex;gap:10px;">
+            <button id="custCancel" style="flex:1;padding:10px;border:1.5px solid #ddd;border-radius:8px;background:#fff;color:#555;font-size:0.9rem;font-weight:600;cursor:pointer;font-family:inherit;">Cancel</button>
+            <button id="custSubmit" style="flex:1;padding:10px;border:none;border-radius:8px;background:linear-gradient(135deg,#e8630a,#ff8c42);color:#fff;font-size:0.9rem;font-weight:600;cursor:pointer;font-family:inherit;">Save & Order</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+
+      // Focus on first empty field
       setTimeout(() => {
-        window.location.href = 'dashboard.html';
-      }, 1500);
+        if (!name) document.getElementById('custName').focus();
+        else if (!phone) document.getElementById('custPhone').focus();
+      }, 100);
+
+      document.getElementById('custCancel').onclick = () => modal.remove();
+      modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+
+      document.getElementById('custSubmit').onclick = async () => {
+        const inputName = document.getElementById('custName').value.trim();
+        const inputPhone = document.getElementById('custPhone').value.trim();
+        const errorEl = document.getElementById('custError');
+        const submitBtn = document.getElementById('custSubmit');
+
+        if (!inputName || !inputPhone) {
+          errorEl.textContent = 'Please fill in all fields.';
+          errorEl.style.display = 'block';
+          return;
+        }
+        if (!/^\d{10}$/.test(inputPhone)) {
+          errorEl.textContent = 'Please enter a valid 10-digit phone number.';
+          errorEl.style.display = 'block';
+          return;
+        }
+
+        submitBtn.textContent = 'Saving...';
+        submitBtn.disabled = true;
+
+        try {
+          // Save details to Supabase account
+          const { error } = await supabaseClient.auth.updateUser({
+            data: {
+              full_name: inputName,
+              phone: inputPhone
+            }
+          });
+
+          if (error) throw error;
+
+          modal.remove();
+          callback({ name: inputName, phone: inputPhone, address: 'Provided via Profile' });
+        } catch (err) {
+          console.error('Error saving profile details:', err);
+          errorEl.textContent = err.message || 'Failed to save profile. Please try again.';
+          errorEl.style.display = 'block';
+          submitBtn.textContent = 'Save & Order';
+          submitBtn.disabled = false;
+        }
+      };
     }
   } catch (e) {
     console.error('Error fetching session:', e);
