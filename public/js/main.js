@@ -318,8 +318,30 @@ async function saveOrderToStorage(orderData) {
   return 'VRB' + Date.now();
 }
 
-// Customer Details Modal - collects name, phone, address before order
-function showCustomerDetailsModal(callback) {
+// Customer Details Modal - collects name and phone before order
+async function showCustomerDetailsModal(callback) {
+  let defaultName = '';
+  let defaultPhone = '';
+
+  // Try to fetch from Supabase session if logged in
+  if (window.supabaseClient) {
+    try {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      if (session && session.user) {
+        defaultName = session.user.user_metadata?.full_name || '';
+        defaultPhone = session.user.user_metadata?.phone || '';
+      }
+    } catch (e) {
+      console.log('Not logged in or error fetching session', e);
+    }
+  }
+
+  // If we already have name and phone from profile, skip the modal
+  if (defaultName && defaultPhone) {
+    callback({ name: defaultName, phone: defaultPhone, address: 'Provided via Profile' });
+    return;
+  }
+
   // Remove existing modal if any
   const existing = document.getElementById('customerDetailsModal');
   if (existing) existing.remove();
@@ -333,21 +355,15 @@ function showCustomerDetailsModal(callback) {
       <p style="margin:0 0 18px;font-size:0.85rem;color:#666;">Please fill in your details to place the order.</p>
       <div style="margin-bottom:14px;">
         <label style="display:block;font-size:0.8rem;font-weight:600;color:#333;margin-bottom:4px;">Full Name *</label>
-        <input type="text" id="custName" placeholder="Enter your full name" required
-          style="width:100%;padding:10px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:0.9rem;font-family:inherit;box-sizing:border-box;outline:none;transition:border 0.2s;"
-          onfocus="this.style.borderColor='#e8630a'" onblur="this.style.borderColor='#ddd'">
-      </div>
-      <div style="margin-bottom:14px;">
-        <label style="display:block;font-size:0.8rem;font-weight:600;color:#333;margin-bottom:4px;">Phone Number *</label>
-        <input type="tel" id="custPhone" placeholder="Enter 10-digit mobile number" required
+        <input type="text" id="custName" value="${defaultName}" placeholder="Enter your full name" required
           style="width:100%;padding:10px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:0.9rem;font-family:inherit;box-sizing:border-box;outline:none;transition:border 0.2s;"
           onfocus="this.style.borderColor='#e8630a'" onblur="this.style.borderColor='#ddd'">
       </div>
       <div style="margin-bottom:18px;">
-        <label style="display:block;font-size:0.8rem;font-weight:600;color:#333;margin-bottom:4px;">Delivery Address *</label>
-        <textarea id="custAddress" placeholder="Enter your full delivery address" rows="2" required
-          style="width:100%;padding:10px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:0.9rem;font-family:inherit;box-sizing:border-box;outline:none;resize:vertical;transition:border 0.2s;"
-          onfocus="this.style.borderColor='#e8630a'" onblur="this.style.borderColor='#ddd'"></textarea>
+        <label style="display:block;font-size:0.8rem;font-weight:600;color:#333;margin-bottom:4px;">Phone Number *</label>
+        <input type="tel" id="custPhone" value="${defaultPhone}" placeholder="Enter 10-digit mobile number" required
+          style="width:100%;padding:10px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:0.9rem;font-family:inherit;box-sizing:border-box;outline:none;transition:border 0.2s;"
+          onfocus="this.style.borderColor='#e8630a'" onblur="this.style.borderColor='#ddd'">
       </div>
       <div id="custError" style="color:#e53e3e;font-size:0.8rem;margin-bottom:10px;display:none;"></div>
       <div style="display:flex;gap:10px;">
@@ -358,8 +374,11 @@ function showCustomerDetailsModal(callback) {
   `;
   document.body.appendChild(modal);
 
-  // Focus on name field
-  setTimeout(() => document.getElementById('custName').focus(), 100);
+  // Focus on first empty field
+  setTimeout(() => {
+    if (!defaultName) document.getElementById('custName').focus();
+    else if (!defaultPhone) document.getElementById('custPhone').focus();
+  }, 100);
 
   document.getElementById('custCancel').onclick = () => modal.remove();
   modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
@@ -367,10 +386,9 @@ function showCustomerDetailsModal(callback) {
   document.getElementById('custSubmit').onclick = () => {
     const name = document.getElementById('custName').value.trim();
     const phone = document.getElementById('custPhone').value.trim();
-    const address = document.getElementById('custAddress').value.trim();
     const errorEl = document.getElementById('custError');
 
-    if (!name || !phone || !address) {
+    if (!name || !phone) {
       errorEl.textContent = 'Please fill in all fields.';
       errorEl.style.display = 'block';
       return;
@@ -382,7 +400,7 @@ function showCustomerDetailsModal(callback) {
     }
 
     modal.remove();
-    callback({ name, phone, address });
+    callback({ name, phone, address: 'Provided via Profile' });
   };
 }
 
