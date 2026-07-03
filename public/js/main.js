@@ -341,7 +341,7 @@ async function saveOrderToStorage(orderData) {
 // Customer Details - fetches directly from profile, no popup
 async function showCustomerDetailsModal(callback) {
   // Check if user is logged in
-  if (!window.supabaseClient) {
+  if (typeof supabaseClient === 'undefined') {
     alert('Please sign in to place an order.');
     window.location.href = 'login.html';
     return;
