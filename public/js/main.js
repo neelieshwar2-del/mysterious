@@ -30,8 +30,10 @@ async function checkAuthState() {
       authBtn.href = 'dashboard.html';
     }
     if (mobileAuthLink) {
-      // Hide Settings option in the mobile sidebar when logged in
-      mobileAuthLink.style.display = 'none';
+      // Show Settings option in the mobile sidebar when logged in
+      mobileAuthLink.style.display = 'block';
+      mobileAuthLink.innerHTML = `Settings`;
+      mobileAuthLink.href = 'dashboard.html';
     }
     if (cartTrigger) {
       cartTrigger.style.display = 'flex';

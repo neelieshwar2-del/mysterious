@@ -1399,6 +1399,10 @@
  }
 
  @media (max-width: 768px) {
+   #navAuthBtn {
+     display: none !important;
+   }
+
    header {
      background-color: white;
    }
