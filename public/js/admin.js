@@ -447,8 +447,36 @@ function handleLogout() {
   checkAuth();
 }
 
-// Sidebar Menu Navigation
-function switchTab(tabId) {
+// Sidebar Menu Navigation & History Tracking
+let tabHistory = [];
+
+function goBackTab() {
+  if (tabHistory.length > 0) {
+    const prevTab = tabHistory.pop();
+    switchTab(prevTab, false);
+  }
+}
+
+function switchTab(tabId, pushToHistory = true) {
+  // Save current active tab to history before switching
+  const activeSection = document.querySelector('.panel-section.active');
+  if (activeSection && pushToHistory) {
+    const activeTabId = activeSection.id.replace('Section', '');
+    if (activeTabId !== tabId) {
+      // Don't accumulate redundant consecutive duplicates in history
+      if (tabHistory[tabHistory.length - 1] !== activeTabId) {
+        tabHistory.push(activeTabId);
+      }
+    }
+  }
+
+  // Toggle visibility of back navigation arrows
+  const hasHistory = tabHistory.length > 0;
+  const desktopBack = document.getElementById('desktopBackBtn');
+  const mobileBack = document.getElementById('mobileBackBtn');
+  if (desktopBack) desktopBack.style.display = hasHistory ? 'inline-flex' : 'none';
+  if (mobileBack) mobileBack.style.display = hasHistory ? 'inline-flex' : 'none';
+
   // Hide all sections
   document.querySelectorAll('.panel-section').forEach(section => {
     section.classList.remove('active');
@@ -468,17 +496,32 @@ function switchTab(tabId) {
     menuLink.parentElement.classList.add('active');
   }
 
-  // Update Main Header Title
+  // Update Main Header Title & Mobile Header Title
   const headerTitle = document.getElementById('headerTitle');
-  if (headerTitle) {
-    if (tabId === 'dashboard') headerTitle.textContent = 'Dashboard Overview';
-    else if (tabId === 'products') headerTitle.textContent = 'Product Inventory';
-    else if (tabId === 'rentals') headerTitle.textContent = 'Rental Inventory';
-    else if (tabId === 'orders') headerTitle.textContent = 'Order Management';
-    else if (tabId === 'add-item') {
-      const isEditing = document.getElementById('itemId').value !== '';
-      headerTitle.textContent = isEditing ? 'Edit Item Details' : 'Add New Inventory Item';
+  const mobileHeaderTitle = document.getElementById('mobileHeaderTitle');
+  
+  let newTitle = '';
+  if (tabId === 'dashboard') newTitle = 'Dashboard Overview';
+  else if (tabId === 'products') newTitle = 'Product Inventory';
+  else if (tabId === 'rentals') newTitle = 'Rental Inventory';
+  else if (tabId === 'orders') newTitle = 'Order Management';
+  else if (tabId === 'add-item') {
+    const isEditing = document.getElementById('itemId').value !== '';
+    newTitle = isEditing ? 'Edit Item Details' : 'Add New Inventory Item';
+    
+    // Hide ratings when adding a new item, show when editing
+    const ratingGroup = document.getElementById('itemRatingGroup');
+    if (ratingGroup) {
+      ratingGroup.style.display = isEditing ? 'block' : 'none';
     }
+  }
+
+  if (headerTitle) {
+    headerTitle.textContent = newTitle;
+  }
+  if (mobileHeaderTitle) {
+    // Show store name on dashboard, and sub-page titles on other views
+    mobileHeaderTitle.textContent = tabId === 'dashboard' ? 'Veerabhadra Store' : newTitle;
   }
 
   // Close Mobile Menu on Click
@@ -704,7 +747,7 @@ function clearForm() {
   document.getElementById('rentalDeposit').value = '';
   document.getElementById('itemDescription').value = '';
   document.getElementById('itemImageUrl').value = '';
-  document.getElementById('itemRating').value = '4.8';
+  document.getElementById('itemRating').value = '5.0';
   
   const fileInput = document.getElementById('itemImageFile');
   if (fileInput) fileInput.value = '';
@@ -751,7 +794,7 @@ function editItem(id) {
     document.getElementById('itemPrice').value = item.price;
   }
 
-  document.getElementById('itemRating').value = item.rating || '4.8';
+  document.getElementById('itemRating').value = item.rating || '5.0';
 
   document.getElementById('formSubmitBtn').textContent = 'Update Item Details';
   toggleFormFields();
@@ -808,7 +851,7 @@ async function handleFormSubmit(e) {
     price = parseFloat(document.getElementById('itemPrice').value);
     deposit = null;
   }
-  const rating = parseFloat(document.getElementById('itemRating').value) || 4.8;
+  const rating = parseFloat(document.getElementById('itemRating').value) || 5.0;
 
   // Construct item record
   const itemData = {

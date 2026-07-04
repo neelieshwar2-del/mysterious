@@ -96,8 +96,13 @@
     <!-- Main Content Wrapper (Right) -->
     <main class="main-content">
       <!-- Desktop Header Topbar -->
-      <header class="topbar">
-        <h2 id="headerTitle" class="page-title">Dashboard Overview</h2>
+      <header class="topbar" style="display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <button id="desktopBackBtn" onclick="goBackTab()" style="display: none; background: none; border: none; font-size: 1.5rem; color: var(--color-primary); cursor: pointer; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 50%;">
+            <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+          </button>
+          <h2 id="headerTitle" class="page-title" style="margin: 0;">Dashboard Overview</h2>
+        </div>
         <div class="user-profile">
           <span class="profile-avatar">A</span>
           <span>Store Admin</span>
@@ -105,12 +110,17 @@
       </header>
 
       <!-- Mobile Topbar header -->
-      <div class="mobile-header">
-        <button id="mobileMenuToggle" class="mobile-menu-toggle" aria-label="Toggle Sidebar">
-          ☰
-        </button>
-        <span class="page-title" style="font-size:1.1rem; color:var(--color-primary); font-weight:700;">Veerabhadra Store</span>
-        <span class="profile-avatar" style="width:28px; height:28px; font-size:0.8rem;">A</span>
+      <div class="mobile-header" style="display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 1rem;">
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <button id="mobileMenuToggle" class="mobile-menu-toggle" aria-label="Toggle Sidebar" style="margin: 0; display: inline-flex; align-items: center; justify-content: center;">
+            ☰
+          </button>
+          <button id="mobileBackBtn" onclick="goBackTab()" style="display: none; background: none; border: none; font-size: 1.25rem; color: var(--color-primary); cursor: pointer; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%;">
+            <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+          </button>
+        </div>
+        <span id="mobileHeaderTitle" class="page-title" style="font-size:1.1rem; color:var(--color-primary); font-weight:700; flex-grow: 1; text-align: center; margin-right: 32px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Veerabhadra Store</span>
+        <span class="profile-avatar" style="width:28px; height:28px; font-size:0.8rem; margin: 0;">A</span>
       </div>
 
       <!-- Content Area -->
@@ -355,9 +365,9 @@
                 </div>
               </div>
 
-              <div class="form-group" style="margin-top: 1rem;">
-                <label for="itemRating" class="form-label">Product Rating (1.0 to 5.0) *</label>
-                <input type="number" id="itemRating" class="form-input" min="1.0" max="5.0" step="0.1" value="4.8" required placeholder="e.g. 4.8">
+              <div id="itemRatingGroup" class="form-group" style="margin-top: 1rem; display: none;">
+                <label for="itemRating" class="form-label">Product Rating (1.0 to 5.0)</label>
+                <input type="number" id="itemRating" class="form-input" min="1.0" max="5.0" step="0.1" value="5.0" placeholder="e.g. 5.0">
               </div>
 
               <div class="form-group">
