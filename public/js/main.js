@@ -21,13 +21,12 @@ async function checkAuthState() {
   const authBtn = document.getElementById('navAuthBtn');
   const mobileAuthLink = document.getElementById('mobileAuthLink');
   const cartTrigger = document.querySelector('.cart-trigger');
+  const navLinks = document.querySelector('.nav-links');
   
   if (session) {
     if (authBtn) {
-      // Show Settings button on desktop navbar when logged in
-      authBtn.style.display = 'inline-flex';
-      authBtn.textContent = '⚙ Settings';
-      authBtn.href = 'dashboard.html';
+      // Remove settings button from header actions in laptop view
+      authBtn.style.display = 'none';
     }
     if (mobileAuthLink) {
       // Show Settings option in the mobile sidebar when logged in
@@ -37,6 +36,15 @@ async function checkAuthState() {
     }
     if (cartTrigger) {
       cartTrigger.style.display = 'flex';
+    }
+    
+    // Add Settings link to desktop navbar menu if not already present
+    if (navLinks && !document.getElementById('navSettingsLink')) {
+      const li = document.createElement('li');
+      li.id = 'navSettingsLink';
+      const isActive = window.location.pathname.includes('dashboard.html');
+      li.innerHTML = `<a href="dashboard.html" ${isActive ? 'class="active"' : ''}>Settings</a>`;
+      navLinks.appendChild(li);
     }
   } else {
     if (authBtn) {
@@ -54,6 +62,12 @@ async function checkAuthState() {
     }
     if (cartTrigger) {
       cartTrigger.style.display = 'none';
+    }
+    
+    // Remove Settings link from desktop navbar menu
+    const settingsLink = document.getElementById('navSettingsLink');
+    if (settingsLink) {
+      settingsLink.remove();
     }
   }
 }
