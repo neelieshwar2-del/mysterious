@@ -30,9 +30,8 @@ async function checkAuthState() {
       authBtn.href = 'dashboard.html';
     }
     if (mobileAuthLink) {
-      // Show Settings option in the mobile sidebar
-      mobileAuthLink.innerHTML = `Settings`;
-      mobileAuthLink.href = 'dashboard.html';
+      // Hide Settings option in the mobile sidebar when logged in
+      mobileAuthLink.style.display = 'none';
     }
     if (cartTrigger) {
       cartTrigger.style.display = 'flex';
@@ -47,6 +46,7 @@ async function checkAuthState() {
       authBtn.style.padding = '0.4rem 1rem';
     }
     if (mobileAuthLink) {
+      mobileAuthLink.style.display = 'block';
       mobileAuthLink.innerHTML = `Sign In`;
       mobileAuthLink.href = 'login.html';
     }
