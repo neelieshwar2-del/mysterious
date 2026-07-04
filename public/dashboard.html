@@ -94,7 +94,7 @@
                 <thead>
                   <tr>
                     <th>Order ID</th>
-                    <th>Date</th>
+                    <th>Date & Time</th>
                     <th>Total</th>
                     <th>Status</th>
                     <th>Action</th>
@@ -233,7 +233,7 @@
           html += `
             <tr>
               <td data-label="Order ID"><strong style="color:var(--color-primary)">${order.id}</strong></td>
-              <td data-label="Date">${order.order_date.split(' ')[0]}</td>
+              <td data-label="Date & Time">${order.order_date}</td>
               <td data-label="Total">₹${order.total_amount}</td>
               <td data-label="Status"><span class="status-badge ${badgeClass}">${order.status}</span></td>
               <td data-label="Action"><a href="#" class="action-link" onclick="alert('Order tracking detailed view coming soon!')">Track</a></td>
