@@ -235,6 +235,14 @@ body {
   cursor: pointer;
 }
 
+.menu-item a svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  stroke: currentColor;
+  fill: none;
+}
+
 .menu-item a:hover {
   background-color: var(--color-bg-light);
   color: var(--color-text-dark);
