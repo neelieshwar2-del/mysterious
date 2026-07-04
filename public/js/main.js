@@ -36,8 +36,128 @@ document.addEventListener('DOMContentLoaded', () => {
   initBookingForm();
   updateActiveNavLink();
   checkAuthState();
-  renderRatings();
+  renderProductsPage(); // Renders admin-added products dynamically on products.html
+  renderRatings();      // Injects ratings + variant dropdowns on rendered cards
 });
+
+// =============================================================================
+// Dynamic Products Page Renderer
+// Renders all product cards on products.html from localStorage / DEFAULT_ITEMS
+// =============================================================================
+const CATEGORY_META = {
+  'brass-items':      { label: 'Brass Items',             desc: 'Bring brightness and positive energy with our heavy-cast, highly polished brass items.' },
+  'copper-items':     { label: 'Copper Items',            desc: 'Pure copper containers and utensils designed for water storage and holy offerings.' },
+  'photo-frames':     { label: 'Photo Frames',            desc: 'Beautifully crafted framed representations of deities for your pooja mandir.' },
+  'daily-essentials': { label: 'Daily Pooja Essentials',  desc: 'Consumables, lighting aids, and purifiers needed for daily prayers and rituals.' },
+};
+
+function buildProductCardHtml(item) {
+  const discount = item.mrp && item.price && item.mrp > item.price
+    ? Math.round(((item.mrp - item.price) / item.mrp) * 100)
+    : 0;
+  const saveAmt = item.mrp && item.price ? item.mrp - item.price : 0;
+  const categoryLabel = CATEGORY_META[item.category]?.label || (item.category || 'Products').replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  const safeName = item.name.replace(/'/g, "\\'");
+
+  return `
+    <div class="product-card">
+      <div class="product-image-container">
+        ${discount > 0 ? `<span class="discount-badge">${discount}% OFF</span>` : ''}
+        <img src="${item.image || 'images/brass-diya.png'}" alt="${item.name}" class="product-image" loading="lazy">
+      </div>
+      <div class="product-info">
+        <span class="product-category">${categoryLabel}</span>
+        <h3 class="product-name">${item.name}</h3>
+        <div class="price-row">
+          <span class="selling-price">₹${item.price}</span>
+          ${item.mrp && item.mrp > item.price ? `<span class="mrp">₹${item.mrp}</span>` : ''}
+          ${saveAmt > 0 ? `<span class="you-save">Save ₹${saveAmt}</span>` : ''}
+        </div>
+        <div class="product-actions">
+          <button class="btn btn-secondary btn-sm add-to-cart-btn"
+            data-id="${item.id}"
+            data-name="${item.name}"
+            data-price="${item.price}"
+            data-image="${item.image || 'images/brass-diya.png'}">
+            Add to Cart
+          </button>
+          <button class="btn btn-whatsapp btn-sm" onclick="orderDirect('${safeName}', ${item.price})">
+            Order Now
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderProductsPage() {
+  const container = document.getElementById('products-dynamic-container');
+  if (!container) return; // Only runs on products.html
+
+  // Load items from localStorage or fall back to defaults
+  let allItems = [];
+  try {
+    const saved = localStorage.getItem('pooja_store_items');
+    allItems = saved ? JSON.parse(saved) : [...DEFAULT_ITEMS];
+  } catch (e) {
+    allItems = [...DEFAULT_ITEMS];
+  }
+
+  // Filter only sale items (not rentals)
+  const saleItems = allItems.filter(i => i.type === 'sale');
+
+  if (saleItems.length === 0) {
+    container.innerHTML = `
+      <div style="text-align:center; padding: 4rem 2rem; color: #888;">
+        <div style="font-size: 3rem; margin-bottom: 1rem;">🪔</div>
+        <p style="font-size: 1.1rem; font-weight: 600;">No products available yet.</p>
+        <p style="font-size: 0.9rem; margin-top: 0.5rem;">Check back soon or contact us on WhatsApp.</p>
+      </div>`;
+    return;
+  }
+
+  // Group items by category (preserve insertion order)
+  const categoryOrder = Object.keys(CATEGORY_META);
+  const grouped = {};
+
+  saleItems.forEach(item => {
+    const cat = item.category || 'daily-essentials';
+    if (!grouped[cat]) grouped[cat] = [];
+    grouped[cat].push(item);
+  });
+
+  // Sort categories: known ones first in order, then unknown alphabetically
+  const sortedCats = [
+    ...categoryOrder.filter(c => grouped[c]),
+    ...Object.keys(grouped).filter(c => !categoryOrder.includes(c)).sort()
+  ];
+
+  let html = '';
+  sortedCats.forEach(cat => {
+    const meta = CATEGORY_META[cat] || {
+      label: cat.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+      desc: ''
+    };
+    const cardsHtml = grouped[cat].map(buildProductCardHtml).join('');
+
+    html += `
+      <div class="category-block" id="${cat}">
+        <div class="category-block-header">
+          <h2>${meta.label}</h2>
+          ${meta.desc ? `<p>${meta.desc}</p>` : ''}
+        </div>
+        <div class="products-grid">
+          ${cardsHtml}
+        </div>
+      </div>
+    `;
+  });
+
+  container.innerHTML = html;
+
+  // Re-attach cart button event listeners after dynamic render
+  bindAddToCartButtons();
+}
 
 // Function to inject star ratings dynamically under product names
 function renderRatings() {
