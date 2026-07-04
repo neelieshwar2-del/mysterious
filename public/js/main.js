@@ -1,6 +1,22 @@
 // Pooja Store - Main JS Configuration & Interactive Features
 
 const WHATSAPP_PHONE = '919908563384'; // Store Owner WhatsApp Number (with country code, no + or spaces)
+const DEFAULT_ITEMS = [
+  { id: 'brass-diya-pair', name: 'Handcrafted Brass Diya (Pair)', category: 'brass-items', mrp: 399, price: 249, image: 'images/brass-diya.png', type: 'sale', rating: 4.8 },
+  { id: 'brass-pooja-bell', name: 'Ornate Brass Pooja Handbell', category: 'brass-items', mrp: 299, price: 179, image: 'images/brass-diya.png', type: 'sale', rating: 4.7 },
+  { id: 'brass-aarti-plate', name: 'Engraved Brass Aarti Plate', category: 'brass-items', mrp: 449, price: 299, image: 'images/brass-diya.png', type: 'sale', rating: 4.8 },
+  { id: 'copper-kalash-pooja', name: 'Pure Copper Pooja Kalash', category: 'copper-items', mrp: 499, price: 349, image: 'images/copper-kalash.png', type: 'sale', rating: 4.9 },
+  { id: 'copper-panchapatra-pali', name: 'Copper Panchapatra & Pali Set', category: 'copper-items', mrp: 299, price: 199, image: 'images/copper-kalash.png', type: 'sale', rating: 4.6 },
+  { id: 'copper-pooja-lota', name: 'Traditional Copper Pooja Lota', category: 'copper-items', mrp: 399, price: 279, image: 'images/copper-kalash.png', type: 'sale', rating: 4.7 },
+  { id: 'ganesha-gold-frame', name: 'Lord Ganesha Gold-Plated Frame', category: 'photo-frames', mrp: 299, price: 199, image: 'images/photo-frame.png', type: 'sale', rating: 4.8 },
+  { id: 'lakshmi-gold-frame', name: 'Goddess Lakshmi Gold-Plated Frame', category: 'photo-frames', mrp: 299, price: 199, image: 'images/photo-frame.png', type: 'sale', rating: 4.9 },
+  { id: 'radha-krishna-frame', name: 'Radha Krishna Wooden Altar Frame', category: 'photo-frames', mrp: 349, price: 249, image: 'images/photo-frame.png', type: 'sale', rating: 4.7 },
+  { id: 'daily-pooja-kit', name: 'Daily Pooja Essentials Kit', category: 'daily-essentials', mrp: 249, price: 149, image: 'images/pooja-kit.png', type: 'sale', rating: 4.8 },
+  { id: 'premium-sandalwood-paste', name: 'Premium Sandalwood Paste (Chandanam)', category: 'daily-essentials', mrp: 149, price: 99, image: 'images/pooja-kit.png', type: 'sale', rating: 4.7 },
+  { id: 'organic-camphor-tablets', name: 'Organic Camphor Tablets (100g)', category: 'daily-essentials', mrp: 119, price: 79, image: 'images/pooja-kit.png', type: 'sale', rating: 4.8 },
+  { id: 'vratam-peta-kit', name: 'Vratam Peta Setup Kit', category: 'rentals', price: 299, deposit: 500, description: 'Traditional wooden peta setup, backdrop frames, brass lamps, copper kalash and complete aarti accessories.', image: 'images/vratam-peta.png', type: 'rental', rating: 4.9 }
+];
+
 // Cart State Management
 let cart = [];
 let isLoggedIn = false;
@@ -12,7 +28,86 @@ document.addEventListener('DOMContentLoaded', () => {
   initBookingForm();
   updateActiveNavLink();
   checkAuthState();
+  renderRatings();
 });
+
+// Function to inject star ratings dynamically under product names
+function renderRatings() {
+  let itemsList = [];
+  try {
+    const saved = localStorage.getItem('pooja_store_items');
+    if (saved) {
+      itemsList = JSON.parse(saved);
+    } else {
+      itemsList = [...DEFAULT_ITEMS];
+    }
+  } catch (e) {
+    itemsList = [...DEFAULT_ITEMS];
+  }
+
+  function getStarsHtml(rating) {
+    const fullStars = Math.floor(rating);
+    const hasHalf = rating % 1 >= 0.4;
+    let stars = '';
+    for (let i = 0; i < 5; i++) {
+      if (i < fullStars) {
+        stars += '<span style="color:#ffb300;">★</span>';
+      } else if (i === fullStars && hasHalf) {
+        stars += '<span style="color:#ffb300;position:relative;display:inline-block;width:0.5em;overflow:hidden;vertical-align:bottom;">★</span><span style="color:#ddd;position:absolute;margin-left:-0.5em;width:0.5em;overflow:hidden;vertical-align:bottom;">★</span>';
+      } else {
+        stars += '<span style="color:#ddd;">★</span>';
+      }
+    }
+    return `<div style="display:inline-flex; align-items:center; gap:2px; font-size:1.1rem; line-height:1;">${stars}</div>`;
+  }
+
+  itemsList.forEach(item => {
+    // 1. Render on products and homepages (which have .product-card)
+    const cartBtn = document.querySelector(`.add-to-cart-btn[data-id="${item.id}"]`);
+    if (cartBtn) {
+      const card = cartBtn.closest('.product-card');
+      if (card) {
+        const infoSection = card.querySelector('.product-info');
+        if (infoSection && !infoSection.querySelector('.dynamic-product-rating')) {
+          const ratingDiv = document.createElement('div');
+          ratingDiv.className = 'dynamic-product-rating';
+          ratingDiv.style.cssText = 'display:flex; align-items:center; gap:6px; font-size:0.82rem; margin: 4px 0 8px; font-family:\'Outfit\',sans-serif;';
+          
+          const reviewsCount = Math.floor(((item.id.charCodeAt(0) || 1) * 3) % 40) + 12;
+          
+          ratingDiv.innerHTML = `
+            ${getStarsHtml(item.rating || 4.8)}
+            <span style="font-weight:700; color:#1a1a2e; margin-top:2px;">${(item.rating || 4.8).toFixed(1)}</span>
+            <span style="color:#888; margin-top:2px;">(${reviewsCount} reviews)</span>
+          `;
+          
+          const nameEl = infoSection.querySelector('.product-name');
+          if (nameEl) {
+            nameEl.parentNode.insertBefore(ratingDiv, nameEl.nextSibling);
+          } else {
+            infoSection.appendChild(ratingDiv);
+          }
+        }
+      }
+    }
+
+    // 2. Render on rental details page (rental.html)
+    if (item.id === 'vratam-peta-kit') {
+      const rentalHeader = document.querySelector('.rental-details h2');
+      if (rentalHeader && !document.getElementById('rentalDetailRating')) {
+        const ratingDiv = document.createElement('div');
+        ratingDiv.id = 'rentalDetailRating';
+        ratingDiv.style.cssText = 'display:inline-flex; align-items:center; gap:6px; font-size:0.9rem; margin: 8px 0 12px; font-family:\'Outfit\',sans-serif; background:rgba(243,112,34,0.05); padding: 4px 10px; border-radius: 6px;';
+        ratingDiv.innerHTML = `
+          ${getStarsHtml(item.rating || 4.9)}
+          <span style="font-weight:700; color:#1a1a2e;">${(item.rating || 4.9).toFixed(1)}</span>
+          <span style="color:#666;">(48 ratings)</span>
+        `;
+        rentalHeader.parentNode.insertBefore(ratingDiv, rentalHeader.nextSibling);
+      }
+    }
+  });
+}
 
 async function checkAuthState() {
   if (typeof supabaseClient === 'undefined') return;

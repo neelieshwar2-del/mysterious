@@ -1,19 +1,19 @@
 // Admin Dashboard Logic
 
 const DEFAULT_ITEMS = [
-  { id: 'brass-diya-pair', name: 'Handcrafted Brass Diya (Pair)', category: 'brass-items', mrp: 399, price: 249, image: 'images/brass-diya.png', type: 'sale' },
-  { id: 'brass-pooja-bell', name: 'Ornate Brass Pooja Handbell', category: 'brass-items', mrp: 299, price: 179, image: 'images/brass-diya.png', type: 'sale' },
-  { id: 'brass-aarti-plate', name: 'Engraved Brass Aarti Plate', category: 'brass-items', mrp: 449, price: 299, image: 'images/brass-diya.png', type: 'sale' },
-  { id: 'copper-kalash-pooja', name: 'Pure Copper Pooja Kalash', category: 'copper-items', mrp: 499, price: 349, image: 'images/copper-kalash.png', type: 'sale' },
-  { id: 'copper-panchapatra-pali', name: 'Copper Panchapatra & Pali Set', category: 'copper-items', mrp: 299, price: 199, image: 'images/copper-kalash.png', type: 'sale' },
-  { id: 'copper-pooja-lota', name: 'Traditional Copper Pooja Lota', category: 'copper-items', mrp: 399, price: 279, image: 'images/copper-kalash.png', type: 'sale' },
-  { id: 'ganesha-gold-frame', name: 'Lord Ganesha Gold-Plated Frame', category: 'photo-frames', mrp: 299, price: 199, image: 'images/photo-frame.png', type: 'sale' },
-  { id: 'lakshmi-gold-frame', name: 'Goddess Lakshmi Gold-Plated Frame', category: 'photo-frames', mrp: 299, price: 199, image: 'images/photo-frame.png', type: 'sale' },
-  { id: 'radha-krishna-frame', name: 'Radha Krishna Wooden Altar Frame', category: 'photo-frames', mrp: 349, price: 249, image: 'images/photo-frame.png', type: 'sale' },
-  { id: 'daily-pooja-kit', name: 'Daily Pooja Essentials Kit', category: 'daily-essentials', mrp: 249, price: 149, image: 'images/pooja-kit.png', type: 'sale' },
-  { id: 'premium-sandalwood-paste', name: 'Premium Sandalwood Paste (Chandanam)', category: 'daily-essentials', mrp: 149, price: 99, image: 'images/pooja-kit.png', type: 'sale' },
-  { id: 'organic-camphor-tablets', name: 'Organic Camphor Tablets (100g)', category: 'daily-essentials', mrp: 119, price: 79, image: 'images/pooja-kit.png', type: 'sale' },
-  { id: 'vratam-peta-kit', name: 'Vratam Peta Setup Kit', category: 'rentals', price: 299, deposit: 500, description: 'Traditional wooden peta setup, backdrop frames, brass lamps, copper kalash and complete aarti accessories.', image: 'images/vratam-peta.png', type: 'rental' }
+  { id: 'brass-diya-pair', name: 'Handcrafted Brass Diya (Pair)', category: 'brass-items', mrp: 399, price: 249, image: 'images/brass-diya.png', type: 'sale', rating: 4.8 },
+  { id: 'brass-pooja-bell', name: 'Ornate Brass Pooja Handbell', category: 'brass-items', mrp: 299, price: 179, image: 'images/brass-diya.png', type: 'sale', rating: 4.7 },
+  { id: 'brass-aarti-plate', name: 'Engraved Brass Aarti Plate', category: 'brass-items', mrp: 449, price: 299, image: 'images/brass-diya.png', type: 'sale', rating: 4.8 },
+  { id: 'copper-kalash-pooja', name: 'Pure Copper Pooja Kalash', category: 'copper-items', mrp: 499, price: 349, image: 'images/copper-kalash.png', type: 'sale', rating: 4.9 },
+  { id: 'copper-panchapatra-pali', name: 'Copper Panchapatra & Pali Set', category: 'copper-items', mrp: 299, price: 199, image: 'images/copper-kalash.png', type: 'sale', rating: 4.6 },
+  { id: 'copper-pooja-lota', name: 'Traditional Copper Pooja Lota', category: 'copper-items', mrp: 399, price: 279, image: 'images/copper-kalash.png', type: 'sale', rating: 4.7 },
+  { id: 'ganesha-gold-frame', name: 'Lord Ganesha Gold-Plated Frame', category: 'photo-frames', mrp: 299, price: 199, image: 'images/photo-frame.png', type: 'sale', rating: 4.8 },
+  { id: 'lakshmi-gold-frame', name: 'Goddess Lakshmi Gold-Plated Frame', category: 'photo-frames', mrp: 299, price: 199, image: 'images/photo-frame.png', type: 'sale', rating: 4.9 },
+  { id: 'radha-krishna-frame', name: 'Radha Krishna Wooden Altar Frame', category: 'photo-frames', mrp: 349, price: 249, image: 'images/photo-frame.png', type: 'sale', rating: 4.7 },
+  { id: 'daily-pooja-kit', name: 'Daily Pooja Essentials Kit', category: 'daily-essentials', mrp: 249, price: 149, image: 'images/pooja-kit.png', type: 'sale', rating: 4.8 },
+  { id: 'premium-sandalwood-paste', name: 'Premium Sandalwood Paste (Chandanam)', category: 'daily-essentials', mrp: 149, price: 99, image: 'images/pooja-kit.png', type: 'sale', rating: 4.7 },
+  { id: 'organic-camphor-tablets', name: 'Organic Camphor Tablets (100g)', category: 'daily-essentials', mrp: 119, price: 79, image: 'images/pooja-kit.png', type: 'sale', rating: 4.8 },
+  { id: 'vratam-peta-kit', name: 'Vratam Peta Setup Kit', category: 'rentals', price: 299, deposit: 500, description: 'Traditional wooden peta setup, backdrop frames, brass lamps, copper kalash and complete aarti accessories.', image: 'images/vratam-peta.png', type: 'rental', rating: 4.9 }
 ];
 
 const DEFAULT_ORDERS = [
@@ -636,6 +636,7 @@ function renderProducts() {
             <span class="price-mrp">₹${p.mrp}</span>
           </div>
         </td>
+        <td><span style="font-weight: 600; color: #ffb300; white-space: nowrap;">★ ${p.rating || '4.8'}</span></td>
         <td>
           <span class="price-save">Save ₹${saveAmt}</span>
         </td>
@@ -681,6 +682,7 @@ function renderRentals() {
           ${r.description || 'No description provided.'}
         </span>
       </td>
+      <td><span style="font-weight: 600; color: #ffb300; white-space: nowrap;">★ ${r.rating || '4.8'}</span></td>
       <td>
         <div class="action-buttons">
           <button class="action-btn action-btn-edit" onclick="editItem('${r.id}')" title="Edit Rental"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4z"></path></svg></button>
@@ -702,6 +704,7 @@ function clearForm() {
   document.getElementById('rentalDeposit').value = '';
   document.getElementById('itemDescription').value = '';
   document.getElementById('itemImageUrl').value = '';
+  document.getElementById('itemRating').value = '4.8';
   
   const fileInput = document.getElementById('itemImageFile');
   if (fileInput) fileInput.value = '';
@@ -747,6 +750,8 @@ function editItem(id) {
     document.getElementById('itemMrp').value = item.mrp;
     document.getElementById('itemPrice').value = item.price;
   }
+
+  document.getElementById('itemRating').value = item.rating || '4.8';
 
   document.getElementById('formSubmitBtn').textContent = 'Update Item Details';
   toggleFormFields();
@@ -803,6 +808,7 @@ async function handleFormSubmit(e) {
     price = parseFloat(document.getElementById('itemPrice').value);
     deposit = null;
   }
+  const rating = parseFloat(document.getElementById('itemRating').value) || 4.8;
 
   // Construct item record
   const itemData = {
@@ -814,7 +820,8 @@ async function handleFormSubmit(e) {
     price,
     mrp,
     deposit,
-    description
+    description,
+    rating
   };
 
   if (id) {
