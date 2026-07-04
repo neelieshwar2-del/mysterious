@@ -12,8 +12,16 @@ const DEFAULT_ITEMS = [
   { id: 'lakshmi-gold-frame', name: 'Goddess Lakshmi Gold-Plated Frame', category: 'photo-frames', mrp: 299, price: 199, image: 'images/photo-frame.png', type: 'sale', rating: 4.9 },
   { id: 'radha-krishna-frame', name: 'Radha Krishna Wooden Altar Frame', category: 'photo-frames', mrp: 349, price: 249, image: 'images/photo-frame.png', type: 'sale', rating: 4.7 },
   { id: 'daily-pooja-kit', name: 'Daily Pooja Essentials Kit', category: 'daily-essentials', mrp: 249, price: 149, image: 'images/pooja-kit.png', type: 'sale', rating: 4.8 },
-  { id: 'premium-sandalwood-paste', name: 'Premium Sandalwood Paste (Chandanam)', category: 'daily-essentials', mrp: 149, price: 99, image: 'images/pooja-kit.png', type: 'sale', rating: 4.7 },
-  { id: 'organic-camphor-tablets', name: 'Organic Camphor Tablets (100g)', category: 'daily-essentials', mrp: 119, price: 79, image: 'images/pooja-kit.png', type: 'sale', rating: 4.8 },
+  { id: 'premium-sandalwood-paste', name: 'Premium Sandalwood Paste (Chandanam)', category: 'daily-essentials', mrp: 149, price: 99, image: 'images/pooja-kit.png', type: 'sale', rating: 4.7, variants: [
+    { name: '100g Cup', mrp: 149, price: 99 },
+    { name: '200g Cup', mrp: 279, price: 189 },
+    { name: '500g Jar', mrp: 599, price: 399 }
+  ] },
+  { id: 'organic-camphor-tablets', name: 'Organic Camphor Tablets (100g)', category: 'daily-essentials', mrp: 119, price: 79, image: 'images/pooja-kit.png', type: 'sale', rating: 4.8, variants: [
+    { name: '100g Box', mrp: 119, price: 79 },
+    { name: '250g Pack', mrp: 249, price: 179 },
+    { name: '500g Mega Pack', mrp: 449, price: 329 }
+  ] },
   { id: 'vratam-peta-kit', name: 'Vratam Peta Setup Kit', category: 'rentals', price: 299, deposit: 500, description: 'Traditional wooden peta setup, backdrop frames, brass lamps, copper kalash and complete aarti accessories.', image: 'images/vratam-peta.png', type: 'rental', rating: 4.9 }
 ];
 
@@ -63,11 +71,13 @@ function renderRatings() {
 
   itemsList.forEach(item => {
     // 1. Render on products and homepages (which have .product-card)
-    const cartBtn = document.querySelector(`.add-to-cart-btn[data-id="${item.id}"]`);
+    const cartBtn = document.querySelector(`.add-to-cart-btn[data-id="${item.id}"], .add-to-cart-btn[data-id^="${item.id}-"]`);
     if (cartBtn) {
       const card = cartBtn.closest('.product-card');
       if (card) {
         const infoSection = card.querySelector('.product-info');
+        
+        // Render rating badge
         if (infoSection && !infoSection.querySelector('.dynamic-product-rating')) {
           const ratingDiv = document.createElement('div');
           ratingDiv.className = 'dynamic-product-rating';
@@ -87,6 +97,93 @@ function renderRatings() {
           } else {
             infoSection.appendChild(ratingDiv);
           }
+        }
+
+        // Render variants select dropdown if variants exist
+        if (infoSection && item.variants && item.variants.length > 0 && !infoSection.querySelector('.variant-select-container')) {
+          const selectContainer = document.createElement('div');
+          selectContainer.className = 'variant-select-container';
+          selectContainer.style.cssText = 'margin: 8px 0 10px; text-align: left;';
+          
+          let optionsHtml = '';
+          item.variants.forEach((v, idx) => {
+            optionsHtml += `<option value="${idx}">${v.name} - ₹${v.price}</option>`;
+          });
+          
+          selectContainer.innerHTML = `
+            <label style="font-size: 0.72rem; font-weight: 700; color: #888; display: block; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px;">Choose Quantity:</label>
+            <select class="variant-select" style="width: 100%; padding: 6px 10px; border-radius: 6px; border: 1px solid #e0e0e0; font-family: 'Outfit', sans-serif; font-size: 0.85rem; color: #1a1a2e; background-color: #fff; cursor: pointer; outline: none; transition: border-color 0.2s;">
+              ${optionsHtml}
+            </select>
+          `;
+          
+          const priceRow = infoSection.querySelector('.price-row');
+          if (priceRow) {
+            priceRow.parentNode.insertBefore(selectContainer, priceRow);
+          } else {
+            infoSection.appendChild(selectContainer);
+          }
+          
+          const selectEl = selectContainer.querySelector('.variant-select');
+          
+          const updateCardVariant = (index) => {
+            const selectedVariant = item.variants[index];
+            if (!selectedVariant) return;
+            
+            // 1. Update prices in UI
+            const sellingPriceEl = infoSection.querySelector('.selling-price');
+            const mrpEl = infoSection.querySelector('.mrp');
+            const youSaveEl = infoSection.querySelector('.you-save');
+            
+            if (sellingPriceEl) sellingPriceEl.textContent = `₹${selectedVariant.price}`;
+            if (mrpEl) mrpEl.textContent = `₹${selectedVariant.mrp}`;
+            
+            if (youSaveEl) {
+              const saveAmt = selectedVariant.mrp - selectedVariant.price;
+              if (saveAmt > 0) {
+                youSaveEl.textContent = `Save ₹${saveAmt}`;
+                youSaveEl.style.display = 'inline-block';
+              } else {
+                youSaveEl.style.display = 'none';
+              }
+            }
+            
+            // 2. Calculate and update discount badge if present
+            const cardParent = infoSection.closest('.product-card');
+            if (cardParent) {
+              const badge = cardParent.querySelector('.discount-badge');
+              if (badge) {
+                const discount = Math.round(((selectedVariant.mrp - selectedVariant.price) / selectedVariant.mrp) * 100);
+                if (discount > 0) {
+                  badge.textContent = `${discount}% OFF`;
+                  badge.style.display = 'block';
+                } else {
+                  badge.style.display = 'none';
+                }
+              }
+            }
+            
+            // 3. Update Add to Cart button dataset
+            if (cartBtn) {
+              cartBtn.setAttribute('data-price', selectedVariant.price);
+              const cleanVariantName = selectedVariant.name;
+              cartBtn.setAttribute('data-name', `${item.name} (${cleanVariantName})`);
+              cartBtn.setAttribute('data-id', `${item.id}-${cleanVariantName.replace(/\s+/g, '-').toLowerCase()}`);
+            }
+            
+            // 4. Update Order Now button onclick handler
+            const orderNowBtn = infoSection.querySelector('button[onclick^="orderDirect"]');
+            if (orderNowBtn) {
+              orderNowBtn.setAttribute('onclick', `orderDirect("${item.name} (${selectedVariant.name})", ${selectedVariant.price})`);
+            }
+          };
+          
+          // Initial trigger for the default variant
+          updateCardVariant(0);
+          
+          selectEl.addEventListener('change', (e) => {
+            updateCardVariant(parseInt(e.target.value));
+          });
         }
       }
     }

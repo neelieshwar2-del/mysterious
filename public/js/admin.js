@@ -11,8 +11,16 @@ const DEFAULT_ITEMS = [
   { id: 'lakshmi-gold-frame', name: 'Goddess Lakshmi Gold-Plated Frame', category: 'photo-frames', mrp: 299, price: 199, image: 'images/photo-frame.png', type: 'sale', rating: 4.9 },
   { id: 'radha-krishna-frame', name: 'Radha Krishna Wooden Altar Frame', category: 'photo-frames', mrp: 349, price: 249, image: 'images/photo-frame.png', type: 'sale', rating: 4.7 },
   { id: 'daily-pooja-kit', name: 'Daily Pooja Essentials Kit', category: 'daily-essentials', mrp: 249, price: 149, image: 'images/pooja-kit.png', type: 'sale', rating: 4.8 },
-  { id: 'premium-sandalwood-paste', name: 'Premium Sandalwood Paste (Chandanam)', category: 'daily-essentials', mrp: 149, price: 99, image: 'images/pooja-kit.png', type: 'sale', rating: 4.7 },
-  { id: 'organic-camphor-tablets', name: 'Organic Camphor Tablets (100g)', category: 'daily-essentials', mrp: 119, price: 79, image: 'images/pooja-kit.png', type: 'sale', rating: 4.8 },
+  { id: 'premium-sandalwood-paste', name: 'Premium Sandalwood Paste (Chandanam)', category: 'daily-essentials', mrp: 149, price: 99, image: 'images/pooja-kit.png', type: 'sale', rating: 4.7, variants: [
+    { name: '100g Cup', mrp: 149, price: 99 },
+    { name: '200g Cup', mrp: 279, price: 189 },
+    { name: '500g Jar', mrp: 599, price: 399 }
+  ] },
+  { id: 'organic-camphor-tablets', name: 'Organic Camphor Tablets (100g)', category: 'daily-essentials', mrp: 119, price: 79, image: 'images/pooja-kit.png', type: 'sale', rating: 4.8, variants: [
+    { name: '100g Box', mrp: 119, price: 79 },
+    { name: '250g Pack', mrp: 249, price: 179 },
+    { name: '500g Mega Pack', mrp: 449, price: 329 }
+  ] },
   { id: 'vratam-peta-kit', name: 'Vratam Peta Setup Kit', category: 'rentals', price: 299, deposit: 500, description: 'Traditional wooden peta setup, backdrop frames, brass lamps, copper kalash and complete aarti accessories.', image: 'images/vratam-peta.png', type: 'rental', rating: 4.9 }
 ];
 
@@ -447,6 +455,51 @@ function handleLogout() {
   checkAuth();
 }
 
+// Product Variants & Custom Quantities Helpers
+function toggleVariantsSection() {
+  const hasVariants = document.getElementById('hasVariants').checked;
+  const section = document.getElementById('variantsSection');
+  const mrpInput = document.getElementById('itemMrp');
+  const priceInput = document.getElementById('itemPrice');
+  
+  if (section) section.style.display = hasVariants ? 'block' : 'none';
+  
+  if (hasVariants) {
+    if (mrpInput) mrpInput.removeAttribute('required');
+    if (priceInput) priceInput.removeAttribute('required');
+    const salePriceFields = document.getElementById('salePriceFields');
+    if (salePriceFields) salePriceFields.style.opacity = '0.5';
+  } else {
+    if (mrpInput) mrpInput.setAttribute('required', 'required');
+    if (priceInput) priceInput.setAttribute('required', 'required');
+    const salePriceFields = document.getElementById('salePriceFields');
+    if (salePriceFields) salePriceFields.style.opacity = '1.0';
+  }
+}
+
+function addVariantRow(name = '', mrp = '', price = '') {
+  const list = document.getElementById('variantsList');
+  if (!list) return;
+  
+  const rowId = 'variant-row-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+  const row = document.createElement('div');
+  row.id = rowId;
+  row.className = 'variant-row';
+  row.style.cssText = 'display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem;';
+  row.innerHTML = `
+    <input type="text" class="form-input variant-name-input" placeholder="e.g. 100g or 1 Pair" value="${name}" required style="padding: 0.4rem 0.6rem; font-size: 0.85rem;">
+    <input type="number" class="form-input variant-mrp-input" placeholder="MRP" value="${mrp}" required style="padding: 0.4rem 0.6rem; font-size: 0.85rem;" min="0">
+    <input type="number" class="form-input variant-price-input" placeholder="Price" value="${price}" required style="padding: 0.4rem 0.6rem; font-size: 0.85rem;" min="0">
+    <button type="button" onclick="removeVariantRow('${rowId}')" style="background: none; border: none; color: var(--color-danger); cursor: pointer; font-size: 1.25rem; padding: 0.25rem; line-height: 1;">&times;</button>
+  `;
+  list.appendChild(row);
+}
+
+function removeVariantRow(id) {
+  const row = document.getElementById(id);
+  if (row) row.remove();
+}
+
 // Sidebar Menu Navigation & History Tracking
 let tabHistory = [];
 
@@ -669,7 +722,10 @@ function renderProducts() {
         <td>
           <div class="item-cell-info">
             <img src="${p.image || 'images/brass-diya.png'}" alt="" class="item-cell-img">
-            <span class="item-cell-name">${p.name}</span>
+            <div>
+              <span class="item-cell-name" style="display:block;">${p.name}</span>
+              ${p.variants && p.variants.length > 0 ? `<span style="font-size:0.75rem; color:var(--color-primary); font-weight:600; display:block; margin-top:2px;">Custom Quantities: ${p.variants.map(v => v.name).join(', ')}</span>` : ''}
+            </div>
           </div>
         </td>
         <td><span class="badge-category">${categoryName}</span></td>
@@ -749,6 +805,12 @@ function clearForm() {
   document.getElementById('itemImageUrl').value = '';
   document.getElementById('itemRating').value = '5.0';
   
+  const hasVariantsCheckbox = document.getElementById('hasVariants');
+  if (hasVariantsCheckbox) hasVariantsCheckbox.checked = false;
+  const listContainer = document.getElementById('variantsList');
+  if (listContainer) listContainer.innerHTML = '';
+  toggleVariantsSection();
+  
   const fileInput = document.getElementById('itemImageFile');
   if (fileInput) fileInput.value = '';
   
@@ -785,6 +847,19 @@ function editItem(id) {
   } else {
     hidePreview();
   }
+
+  const hasVariantsCheckbox = document.getElementById('hasVariants');
+  const listContainer = document.getElementById('variantsList');
+  if (listContainer) listContainer.innerHTML = '';
+  if (item.variants && item.variants.length > 0) {
+    if (hasVariantsCheckbox) hasVariantsCheckbox.checked = true;
+    item.variants.forEach(v => {
+      addVariantRow(v.name, v.mrp, v.price);
+    });
+  } else {
+    if (hasVariantsCheckbox) hasVariantsCheckbox.checked = false;
+  }
+  toggleVariantsSection();
 
   if (item.type === 'rental') {
     document.getElementById('rentalPrice').value = item.price;
@@ -840,8 +915,34 @@ async function handleFormSubmit(e) {
   }
 
   let price, mrp, deposit;
+  let variants = [];
 
-  if (type === 'rental') {
+  const hasVariants = document.getElementById('hasVariants').checked;
+  if (type === 'sale' && hasVariants) {
+    const rows = document.querySelectorAll('#variantsList .variant-row');
+    rows.forEach(row => {
+      const nameInput = row.querySelector('.variant-name-input');
+      const mrpInput = row.querySelector('.variant-mrp-input');
+      const priceInput = row.querySelector('.variant-price-input');
+      if (nameInput && mrpInput && priceInput) {
+        const vName = nameInput.value.trim();
+        const vMrp = parseFloat(mrpInput.value) || 0;
+        const vPrice = parseFloat(priceInput.value) || 0;
+        if (vName) {
+          variants.push({ name: vName, mrp: vMrp, price: vPrice });
+        }
+      }
+    });
+
+    if (variants.length > 0) {
+      mrp = variants[0].mrp;
+      price = variants[0].price;
+    } else {
+      mrp = parseFloat(document.getElementById('itemMrp').value) || 0;
+      price = parseFloat(document.getElementById('itemPrice').value) || 0;
+    }
+    deposit = null;
+  } else if (type === 'rental') {
     price = parseFloat(document.getElementById('rentalPrice').value);
     const depVal = document.getElementById('rentalDeposit').value.trim();
     deposit = depVal ? parseFloat(depVal) : null;
@@ -864,7 +965,8 @@ async function handleFormSubmit(e) {
     mrp,
     deposit,
     description,
-    rating
+    rating,
+    variants: variants.length > 0 ? variants : undefined
   };
 
   if (id) {
