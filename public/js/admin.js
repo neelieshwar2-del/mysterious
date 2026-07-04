@@ -485,19 +485,74 @@ function addVariantRow(name = '', mrp = '', price = '') {
   const row = document.createElement('div');
   row.id = rowId;
   row.className = 'variant-row';
-  row.style.cssText = 'display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem;';
+  row.style.cssText = 'display: grid; grid-template-columns: 1fr 1.4fr 1fr 1fr auto; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem;';
+
+  // Parse existing name back into qty + unit if editing
+  // e.g. "250g Packet" -> qty="250g", unit="Packet"
+  // e.g. "1 Box" -> qty="1", unit="Box"
+  // e.g. "100g" -> qty="100g", unit="" (just qty, no unit)
+  const KNOWN_UNITS = ['g', 'kg', 'ml', 'L', 'Box', 'Packet', 'Piece', 'Pair', 'Set', 'Jar', 'Bottle', 'Bundle', 'Cup', 'Bag', 'Cone', 'Stick', 'Roll'];
+  let parsedQty = name;
+  let parsedUnit = '';
+  if (name) {
+    // Try to split on last space to find unit
+    const lastSpace = name.lastIndexOf(' ');
+    if (lastSpace > 0) {
+      const possibleUnit = name.substring(lastSpace + 1);
+      if (KNOWN_UNITS.includes(possibleUnit)) {
+        parsedQty = name.substring(0, lastSpace);
+        parsedUnit = possibleUnit;
+      }
+    }
+  }
+
+  const unitOptions = ['g', 'kg', 'ml', 'L', 'Box', 'Packet', 'Piece', 'Pair', 'Set', 'Jar', 'Bottle', 'Bundle', 'Cup', 'Bag', 'Cone', 'Stick', 'Roll', 'Custom...'];
+  const unitOptionsHtml = unitOptions.map(u => {
+    const isCustom = u === 'Custom...';
+    const selected = (!isCustom && u === parsedUnit) ? 'selected' : '';
+    const val = isCustom ? '__custom__' : u;
+    return `<option value="${val}" ${selected}>${u}</option>`;
+  }).join('');
+
+  // If parsedUnit wasn't in known list, it's custom
+  const isCustomUnit = parsedUnit && !KNOWN_UNITS.includes(parsedUnit);
+  const customUnitValue = isCustomUnit ? parsedUnit : '';
+  const showCustom = isCustomUnit;
+
   row.innerHTML = `
-    <input type="text" class="form-input variant-name-input" placeholder="e.g. 100g or 1 Pair" value="${name}" required style="padding: 0.4rem 0.6rem; font-size: 0.85rem;">
+    <input type="text" class="form-input variant-qty-input" placeholder="e.g. 100, 250, 1" value="${parsedQty}" required style="padding: 0.4rem 0.6rem; font-size: 0.85rem;">
+    <div style="display: flex; flex-direction: column; gap: 3px;">
+      <select class="form-input variant-unit-select" onchange="toggleCustomUnit(this)" style="padding: 0.4rem 0.5rem; font-size: 0.82rem; cursor: pointer;">
+        <option value="">-- Select Unit --</option>
+        ${unitOptionsHtml}
+      </select>
+      <input type="text" class="form-input variant-unit-custom" placeholder="Type unit e.g. Tray" value="${customUnitValue}" style="padding: 0.35rem 0.5rem; font-size: 0.8rem; display: ${showCustom ? 'block' : 'none'};">
+    </div>
     <input type="number" class="form-input variant-mrp-input" placeholder="MRP" value="${mrp}" required style="padding: 0.4rem 0.6rem; font-size: 0.85rem;" min="0">
     <input type="number" class="form-input variant-price-input" placeholder="Price" value="${price}" required style="padding: 0.4rem 0.6rem; font-size: 0.85rem;" min="0">
     <button type="button" onclick="removeVariantRow('${rowId}')" style="background: none; border: none; color: var(--color-danger); cursor: pointer; font-size: 1.25rem; padding: 0.25rem; line-height: 1;">&times;</button>
   `;
+
+  // If parsedUnit was custom, select the "Custom..." option
+  if (isCustomUnit) {
+    const sel = row.querySelector('.variant-unit-select');
+    if (sel) sel.value = '__custom__';
+  }
+
   list.appendChild(row);
 }
 
 function removeVariantRow(id) {
   const row = document.getElementById(id);
   if (row) row.remove();
+}
+
+function toggleCustomUnit(selectEl) {
+  const customInput = selectEl.parentElement.querySelector('.variant-unit-custom');
+  if (customInput) {
+    customInput.style.display = selectEl.value === '__custom__' ? 'block' : 'none';
+    if (selectEl.value !== '__custom__') customInput.value = '';
+  }
 }
 
 // Sidebar Menu Navigation & History Tracking
@@ -921,11 +976,24 @@ async function handleFormSubmit(e) {
   if (type === 'sale' && hasVariants) {
     const rows = document.querySelectorAll('#variantsList .variant-row');
     rows.forEach(row => {
-      const nameInput = row.querySelector('.variant-name-input');
+      const qtyInput = row.querySelector('.variant-qty-input');
+      const unitSelect = row.querySelector('.variant-unit-select');
+      const unitCustom = row.querySelector('.variant-unit-custom');
       const mrpInput = row.querySelector('.variant-mrp-input');
       const priceInput = row.querySelector('.variant-price-input');
-      if (nameInput && mrpInput && priceInput) {
-        const vName = nameInput.value.trim();
+      if (qtyInput && mrpInput && priceInput) {
+        const vQty = qtyInput.value.trim();
+        let vUnit = '';
+        if (unitSelect) {
+          if (unitSelect.value === '__custom__') {
+            vUnit = unitCustom ? unitCustom.value.trim() : '';
+          } else {
+            vUnit = unitSelect.value;
+          }
+        }
+        // Combine: "100" + "g" → "100g", "250" + "Box" → "250 Box"
+        const needsSpace = vUnit && !['g', 'kg', 'ml', 'L'].includes(vUnit);
+        const vName = vQty + (vUnit ? (needsSpace ? ' ' + vUnit : vUnit) : '');
         const vMrp = parseFloat(mrpInput.value) || 0;
         const vPrice = parseFloat(priceInput.value) || 0;
         if (vName) {
