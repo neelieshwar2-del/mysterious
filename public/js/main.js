@@ -49,6 +49,7 @@ const CATEGORY_META = {
   'copper-items':     { label: 'Copper Items',            desc: 'Pure copper containers and utensils designed for water storage and holy offerings.' },
   'photo-frames':     { label: 'Photo Frames',            desc: 'Beautifully crafted framed representations of deities for your pooja mandir.' },
   'daily-essentials': { label: 'Daily Pooja Essentials',  desc: 'Consumables, lighting aids, and purifiers needed for daily prayers and rituals.' },
+  'decorative-items': { label: 'Decorative Items',        desc: 'Enhance your sacred spaces with traditional decorative garlands, torans, hanging lamps, and backdrop drapes.' },
 };
 
 function buildProductCardHtml(item) {
@@ -58,32 +59,50 @@ function buildProductCardHtml(item) {
   const saveAmt = item.mrp && item.price ? item.mrp - item.price : 0;
   const categoryLabel = CATEGORY_META[item.category]?.label || (item.category || 'Products').replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
   const safeName = item.name.replace(/'/g, "\\'");
+  const isOOS = !!item.outOfStock;
 
   return `
-    <div class="product-card">
+    <div class="product-card${isOOS ? ' product-card--oos' : ''}">
       <div class="product-image-container">
-        ${discount > 0 ? `<span class="discount-badge">${discount}% OFF</span>` : ''}
-        <img src="${item.image || 'images/brass-diya.png'}" alt="${item.name}" class="product-image" loading="lazy">
+        ${discount > 0 && !isOOS ? `<span class="discount-badge">${discount}% OFF</span>` : ''}
+        ${isOOS ? `<div style="position:absolute;inset:0;background:rgba(0,0,0,0.45);border-radius:inherit;display:flex;align-items:center;justify-content:center;z-index:2;">
+          <span style="background:#ef4444;color:#fff;font-size:0.78rem;font-weight:800;padding:5px 14px;border-radius:20px;letter-spacing:0.5px;text-transform:uppercase;box-shadow:0 2px 8px rgba(239,68,68,0.4);">Out of Stock</span>
+        </div>` : ''}
+        <img src="${item.image || 'images/brass-diya.png'}" alt="${item.name}" class="product-image" loading="lazy" style="${isOOS ? 'opacity:0.55;filter:grayscale(30%);' : ''}">
       </div>
       <div class="product-info">
         <span class="product-category">${categoryLabel}</span>
         <h3 class="product-name">${item.name}</h3>
-        <div class="price-row">
+        <div class="price-row" style="${isOOS ? 'opacity:0.55;' : ''}">
           <span class="selling-price">₹${item.price}</span>
           ${item.mrp && item.mrp > item.price ? `<span class="mrp">₹${item.mrp}</span>` : ''}
           ${saveAmt > 0 ? `<span class="you-save">Save ₹${saveAmt}</span>` : ''}
         </div>
         <div class="product-actions">
-          <button class="btn btn-secondary btn-sm add-to-cart-btn"
-            data-id="${item.id}"
-            data-name="${item.name}"
-            data-price="${item.price}"
-            data-image="${item.image || 'images/brass-diya.png'}">
-            Add to Cart
-          </button>
-          <button class="btn btn-whatsapp btn-sm" onclick="orderDirect('${safeName}', ${item.price})">
-            Order Now
-          </button>
+          ${isOOS
+            ? `<button class="btn btn-secondary btn-sm add-to-cart-btn" disabled
+                style="opacity:0.45;cursor:not-allowed;pointer-events:none;"
+                data-id="${item.id}"
+                data-name="${item.name}"
+                data-price="${item.price}"
+                data-image="${item.image || 'images/brass-diya.png'}">
+                Add to Cart
+              </button>
+              <button class="btn btn-sm" disabled
+                style="opacity:0.45;cursor:not-allowed;pointer-events:none;background:#e2e8f0;color:#94a3b8;border:none;border-radius:var(--radius-full,50px);font-size:0.875rem;font-weight:600;padding:0.6rem 1.2rem;">
+                Unavailable
+              </button>`
+            : `<button class="btn btn-secondary btn-sm add-to-cart-btn"
+                data-id="${item.id}"
+                data-name="${item.name}"
+                data-price="${item.price}"
+                data-image="${item.image || 'images/brass-diya.png'}">
+                Add to Cart
+              </button>
+              <button class="btn btn-whatsapp btn-sm" onclick="orderDirect('${safeName}', ${item.price})">
+                Order Now
+              </button>`
+          }
         </div>
       </div>
     </div>
@@ -195,6 +214,44 @@ function renderRatings() {
     if (cartBtn) {
       const card = cartBtn.closest('.product-card');
       if (card) {
+        // Apply Out of Stock styling if item is out of stock (important for homepage static cards)
+        if (item.outOfStock) {
+          card.classList.add('product-card--oos');
+          const imgContainer = card.querySelector('.product-image-container');
+          if (imgContainer && !imgContainer.querySelector('.oos-overlay')) {
+            const discountBadge = imgContainer.querySelector('.discount-badge');
+            if (discountBadge) discountBadge.style.display = 'none';
+            
+            const oosOverlay = document.createElement('div');
+            oosOverlay.className = 'oos-overlay';
+            oosOverlay.style.cssText = 'position:absolute;inset:0;background:rgba(0,0,0,0.45);border-radius:inherit;display:flex;align-items:center;justify-content:center;z-index:2;';
+            oosOverlay.innerHTML = '<span style="background:#ef4444;color:#fff;font-size:0.78rem;font-weight:800;padding:5px 14px;border-radius:20px;letter-spacing:0.5px;text-transform:uppercase;box-shadow:0 2px 8px rgba(239,68,68,0.4);">Out of Stock</span>';
+            imgContainer.appendChild(oosOverlay);
+            
+            const img = imgContainer.querySelector('.product-image');
+            if (img) {
+              img.style.opacity = '0.55';
+              img.style.filter = 'grayscale(30%)';
+            }
+          }
+          const priceRow = card.querySelector('.price-row');
+          if (priceRow) priceRow.style.opacity = '0.55';
+          
+          // Disable Add to Cart button
+          cartBtn.setAttribute('disabled', 'true');
+          cartBtn.style.cssText = 'opacity:0.45;cursor:not-allowed;pointer-events:none;';
+          
+          // Replace Order Now button with Unavailable
+          const orderNowBtn = card.querySelector('button[onclick^="orderDirect"]');
+          if (orderNowBtn) {
+            orderNowBtn.setAttribute('disabled', 'true');
+            orderNowBtn.removeAttribute('onclick');
+            orderNowBtn.className = 'btn btn-sm';
+            orderNowBtn.style.cssText = 'opacity:0.45;cursor:not-allowed;pointer-events:none;background:#e2e8f0;color:#94a3b8;border:none;border-radius:var(--radius-full,50px);font-size:0.875rem;font-weight:600;padding:0.6rem 1.2rem;';
+            orderNowBtn.textContent = 'Unavailable';
+          }
+        }
+
         const infoSection = card.querySelector('.product-info');
         
         // Render rating badge

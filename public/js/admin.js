@@ -688,19 +688,50 @@ function toggleFormFields() {
   const type = document.getElementById('itemType').value;
   const saleFields = document.getElementById('salePriceFields');
   const rentalFields = document.getElementById('rentalPriceFields');
+  const rentalDimensions = document.getElementById('rentalDimensionsFields');
+  const variantsCheckboxGroup = document.getElementById('variantsCheckboxGroup');
+  const variantsSection = document.getElementById('variantsSection');
 
   if (type === 'rental') {
     saleFields.style.display = 'none';
     rentalFields.style.display = 'block';
+    if (rentalDimensions) rentalDimensions.style.display = 'grid';
+    
+    // Hide variants configuration since rentals do not have custom quantities
+    if (variantsCheckboxGroup) variantsCheckboxGroup.style.display = 'none';
+    if (variantsSection) variantsSection.style.display = 'none';
+    const hasVariantsCheckbox = document.getElementById('hasVariants');
+    if (hasVariantsCheckbox) {
+      hasVariantsCheckbox.checked = false;
+    }
+    toggleVariantsSection();
+
     document.getElementById('itemMrp').required = false;
     document.getElementById('itemPrice').required = false;
     document.getElementById('rentalPrice').required = true;
+    
+    const heightInput = document.getElementById('rentalHeight');
+    const widthInput = document.getElementById('rentalWidth');
+    if (heightInput) heightInput.required = true;
+    if (widthInput) widthInput.required = true;
   } else {
     saleFields.style.display = 'block';
     rentalFields.style.display = 'none';
+    if (rentalDimensions) rentalDimensions.style.display = 'none';
+    
+    // Show variants configuration for sale items
+    if (variantsCheckboxGroup) variantsCheckboxGroup.style.display = 'block';
+    // Let toggleVariantsSection handle variantsSection display based on checkbox state
+    toggleVariantsSection();
+
     document.getElementById('itemMrp').required = true;
     document.getElementById('itemPrice').required = true;
     document.getElementById('rentalPrice').required = false;
+    
+    const heightInput = document.getElementById('rentalHeight');
+    const widthInput = document.getElementById('rentalWidth');
+    if (heightInput) heightInput.required = false;
+    if (widthInput) widthInput.required = false;
   }
 }
 
@@ -772,13 +803,14 @@ function renderProducts() {
   tableBody.innerHTML = products.map(p => {
     const saveAmt = Math.max(0, p.mrp - p.price);
     const categoryName = p.category ? p.category.replace('-', ' ') : 'Pooja items';
+    const isOOS = !!p.outOfStock;
     return `
       <tr>
         <td>
           <div class="item-cell-info">
-            <img src="${p.image || 'images/brass-diya.png'}" alt="" class="item-cell-img">
+            <img src="${p.image || 'images/brass-diya.png'}" alt="" class="item-cell-img" style="${isOOS ? 'opacity:0.5;' : ''}">
             <div>
-              <span class="item-cell-name" style="display:block;">${p.name}</span>
+              <span class="item-cell-name" style="display:block;">${p.name}${isOOS ? '<span class="out-of-stock-badge">Out of Stock</span>' : ''}</span>
               ${p.variants && p.variants.length > 0 ? `<span style="font-size:0.75rem; color:var(--color-primary); font-weight:600; display:block; margin-top:2px;">Custom Quantities: ${p.variants.map(v => v.name).join(', ')}</span>` : ''}
             </div>
           </div>
@@ -796,6 +828,9 @@ function renderProducts() {
         </td>
         <td>
           <div class="action-buttons">
+            <button class="action-btn-stock ${isOOS ? 'is-out-of-stock' : ''}" onclick="toggleOutOfStock('${p.id}')" title="${isOOS ? 'Mark as In Stock' : 'Mark as Out of Stock'}">
+              ${isOOS ? '🔴 Out of Stock' : '🟢 In Stock'}
+            </button>
             <button class="action-btn action-btn-edit" onclick="editItem('${p.id}')" title="Edit Product"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4z"></path></svg></button>
             <button class="action-btn action-btn-delete" onclick="deleteItem('${p.id}')" title="Delete Product"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg></button>
           </div>
@@ -822,7 +857,10 @@ function renderRentals() {
       <td>
         <div class="item-cell-info">
           <img src="${r.image || 'images/vratam-peta.png'}" alt="" class="item-cell-img">
-          <span class="item-cell-name">${r.name}</span>
+          <div>
+            <span class="item-cell-name" style="display:block;">${r.name}</span>
+            ${r.height || r.width ? `<span style="font-size:0.75rem; color:var(--color-primary); font-weight:600; display:block; margin-top:2px;">Size: ${r.height || 'N/A'} (H) x ${r.width || 'N/A'} (W)</span>` : ''}
+          </div>
         </div>
       </td>
       <td>
@@ -847,6 +885,24 @@ function renderRentals() {
   `).join('');
 }
 
+// Toggle Out-of-Stock status for a product
+function toggleOutOfStock(id) {
+  const index = items.findIndex(i => i.id === id);
+  if (index === -1) return;
+
+  items[index].outOfStock = !items[index].outOfStock;
+  const newStatus = items[index].outOfStock;
+
+  // Persist to localStorage
+  saveData();
+
+  // Show feedback toast
+  showToast(`"${items[index].name}" marked as ${newStatus ? 'Out of Stock' : 'In Stock'}.`);
+
+  // Re-render products table to reflect changes
+  renderProducts();
+}
+
 // Form CRUD Operations
 function clearForm() {
   document.getElementById('itemId').value = '';
@@ -856,6 +912,12 @@ function clearForm() {
   document.getElementById('itemPrice').value = '';
   document.getElementById('rentalPrice').value = '';
   document.getElementById('rentalDeposit').value = '';
+  
+  const heightInput = document.getElementById('rentalHeight');
+  const widthInput = document.getElementById('rentalWidth');
+  if (heightInput) heightInput.value = '';
+  if (widthInput) widthInput.value = '';
+
   document.getElementById('itemDescription').value = '';
   document.getElementById('itemImageUrl').value = '';
   document.getElementById('itemRating').value = '5.0';
@@ -919,6 +981,11 @@ function editItem(id) {
   if (item.type === 'rental') {
     document.getElementById('rentalPrice').value = item.price;
     document.getElementById('rentalDeposit').value = item.deposit || '';
+    
+    const heightInput = document.getElementById('rentalHeight');
+    const widthInput = document.getElementById('rentalWidth');
+    if (heightInput) heightInput.value = item.height || '';
+    if (widthInput) widthInput.value = item.width || '';
   } else {
     document.getElementById('itemMrp').value = item.mrp;
     document.getElementById('itemPrice').value = item.price;
@@ -969,7 +1036,7 @@ async function handleFormSubmit(e) {
     }
   }
 
-  let price, mrp, deposit;
+  let price, mrp, deposit, height = null, width = null;
   let variants = [];
 
   const hasVariants = document.getElementById('hasVariants').checked;
@@ -1015,6 +1082,11 @@ async function handleFormSubmit(e) {
     const depVal = document.getElementById('rentalDeposit').value.trim();
     deposit = depVal ? parseFloat(depVal) : null;
     mrp = null;
+    
+    const heightInput = document.getElementById('rentalHeight');
+    const widthInput = document.getElementById('rentalWidth');
+    height = heightInput ? heightInput.value.trim() : null;
+    width = widthInput ? widthInput.value.trim() : null;
   } else {
     mrp = parseFloat(document.getElementById('itemMrp').value);
     price = parseFloat(document.getElementById('itemPrice').value);
@@ -1032,6 +1104,8 @@ async function handleFormSubmit(e) {
     price,
     mrp,
     deposit,
+    height: type === 'rental' ? height : undefined,
+    width: type === 'rental' ? width : undefined,
     description,
     rating,
     variants: variants.length > 0 ? variants : undefined
@@ -1595,4 +1669,6 @@ window.closeConfirmationModal = closeConfirmationModal;
 window.confirmStatusUpdate = confirmStatusUpdate;
 window.triggerStatusUpdateFromModal = triggerStatusUpdateFromModal;
 window.renderOrders = renderOrders;
+window.toggleOutOfStock = toggleOutOfStock;
+
 

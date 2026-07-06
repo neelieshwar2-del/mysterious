@@ -329,6 +329,8 @@
                     <option value="copper-items">Copper Items</option>
                     <option value="photo-frames">Photo Frames</option>
                     <option value="daily-essentials">Daily Essentials</option>
+                    <option value="rentals">Rentals</option>
+                    <option value="decorative-items">Decorative Items</option>
                   </select>
                 </div>
 
@@ -353,7 +355,7 @@
                 </div>
               </div>
 
-              <div class="form-group" style="margin-top: 1rem;">
+              <div id="variantsCheckboxGroup" class="form-group" style="margin-top: 1rem;">
                 <label class="form-label" style="display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: 500;">
                   <input type="checkbox" id="hasVariants" onchange="toggleVariantsSection()" style="width: 16px; height: 16px; cursor: pointer;">
                   <span>Product has custom quantities / variants (e.g. 100g, 250g, 500g)</span>
@@ -385,6 +387,18 @@
                 <div class="form-group">
                   <label for="rentalDeposit" class="form-label">Security Deposit (₹) <span style="font-weight:normal;color:var(--color-text-muted);">(Optional)</span></label>
                   <input type="number" id="rentalDeposit" class="form-input" min="0" placeholder="e.g. 500">
+                </div>
+              </div>
+
+              <!-- Rental Dimensions Fields -->
+              <div id="rentalDimensionsFields" class="form-grid-2" style="display: none; margin-top: 1rem;">
+                <div class="form-group">
+                  <label for="rentalHeight" class="form-label">Height (e.g. 5 ft)</label>
+                  <input type="text" id="rentalHeight" class="form-input" placeholder="e.g. 5 ft">
+                </div>
+                <div class="form-group">
+                  <label for="rentalWidth" class="form-label">Width (e.g. 4 ft)</label>
+                  <input type="text" id="rentalWidth" class="form-input" placeholder="e.g. 4 ft">
                 </div>
               </div>
 

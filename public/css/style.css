@@ -685,6 +685,12 @@
    border-color: rgba(243, 112, 34, 0.15);
  }
 
+ .product-card--oos:hover {
+   transform: none;
+   box-shadow: var(--shadow-sm);
+   border-color: rgba(243, 112, 34, 0.05);
+ }
+
  .product-image-container {
    position: relative;
    aspect-ratio: 1;

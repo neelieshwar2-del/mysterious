@@ -597,6 +597,57 @@ body {
   background-color: rgba(239, 68, 68, 0.08);
 }
 
+/* Out-of-Stock Toggle Button */
+.action-btn-stock {
+  color: #64748b;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 20px;
+  padding: 0.25rem 0.65rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  font-family: 'Outfit', sans-serif;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+  cursor: pointer;
+  background: #f8fafc;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.action-btn-stock:hover {
+  border-color: #94a3b8;
+  background: #f1f5f9;
+}
+
+.action-btn-stock.is-out-of-stock {
+  background: rgba(239, 68, 68, 0.07);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #ef4444;
+}
+
+.action-btn-stock.is-out-of-stock:hover {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: #ef4444;
+}
+
+/* Out-of-stock badge shown in products table */
+.out-of-stock-badge {
+  display: inline-block;
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  margin-left: 6px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+
 /* 5. Add/Edit Form Style */
 .form-card {
   background-color: #ffffff;
