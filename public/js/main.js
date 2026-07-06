@@ -1,6 +1,6 @@
 // Pooja Store - Main JS Configuration & Interactive Features
 
-const WHATSAPP_PHONE = '919908563384'; // Store Owner WhatsApp Number (with country code, no + or spaces)
+const WHATSAPP_PHONE = '918143242659'; // Store Owner WhatsApp Number (with country code, no + or spaces)
 const DEFAULT_ITEMS = [
   { id: 'brass-diya-pair', name: 'Handcrafted Brass Diya (Pair)', category: 'brass-items', mrp: 399, price: 249, image: 'images/brass-diya.png', type: 'sale', rating: 4.8 },
   { id: 'brass-pooja-bell', name: 'Ornate Brass Pooja Handbell', category: 'brass-items', mrp: 299, price: 179, image: 'images/brass-diya.png', type: 'sale', rating: 4.7 },
