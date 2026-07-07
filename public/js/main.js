@@ -605,11 +605,31 @@ function renderCart() {
 
   if (cart.length === 0) {
     container.innerHTML = `
-      <div class="cart-empty-message">
-        <span class="cart-empty-icon">🪔</span>
-        <h3>Your Cart is Empty</h3>
-        <p>Add traditional essentials to your cart and order them via WhatsApp.</p>
-        <a href="products.html" class="btn btn-primary btn-sm" style="margin-top: 1rem;">Browse Products</a>
+      <div class="cart-empty-message" style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:80%; text-align:center; gap:0.75rem; padding:2rem 1rem;">
+        <svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-bottom:0.5rem; filter:drop-shadow(0 8px 16px rgba(243,112,34,0.12));">
+          <circle cx="60" cy="60" r="50" fill="url(#paint0_linear)" fill-opacity="0.08"/>
+          <circle cx="60" cy="60" r="40" fill="url(#paint0_linear)" fill-opacity="0.12"/>
+          <path d="M40 45V35C40 23.9543 48.9543 15 60 15C71.0457 15 80 23.9543 80 35V45" stroke="url(#paint1_linear)" stroke-width="3" stroke-linecap="round"/>
+          <rect x="30" y="42" width="60" height="50" rx="12" fill="#FFFFFF" stroke="url(#paint1_linear)" stroke-width="3"/>
+          <path d="M60 55C56 61 51 61 51 65C51 69 55 71 60 71C65 71 69 69 69 65C69 61 64 61 60 55Z" fill="url(#paint1_linear)" fill-opacity="0.85"/>
+          <path d="M60 59C58 63 55 64 55 66.5C55 69 57.5 70 60 70C62.5 70 65 69 65 66.5C65 64 62 63 60 59Z" fill="#FFF"/>
+          <path d="M25 30L27 34L31 35L27 36L25 40L23 36L19 35L23 34L25 30Z" fill="#ffb300"/>
+          <path d="M95 38L96.5 41L99.5 42L96.5 43L95 46L93.5 43L90.5 42L93.5 41L95 38Z" fill="#f37022"/>
+          <path d="M50 82L51 84L53 84.5L51 85L50 87L49 85L47 84.5L49 84L50 82Z" fill="#f37022"/>
+          <defs>
+            <linearGradient id="paint0_linear" x1="10" y1="10" x2="110" y2="110" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#f37022"/>
+              <stop offset="1" stop-color="#ffb300"/>
+            </linearGradient>
+            <linearGradient id="paint1_linear" x1="30" y1="42" x2="90" y2="92" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#f37022"/>
+              <stop offset="1" stop-color="#ffb300"/>
+            </linearGradient>
+          </defs>
+        </svg>
+        <h3 style="font-family:var(--font-heading); font-size:1.35rem; color:var(--color-accent); font-weight:700; margin:0.25rem 0 0;">Your Cart is Empty</h3>
+        <p style="font-size:0.85rem; max-width:280px; line-height:1.6; color:var(--color-text-light); margin:0;">Bring home tradition & purity. Fill your basket with our handpicked pooja essentials.</p>
+        <a href="products.html" class="btn btn-secondary btn-sm" style="margin-top:0.75rem; border-radius:var(--radius-full, 50px); padding:0.6rem 1.6rem; font-size:0.82rem; font-weight:700; letter-spacing:0.3px; box-shadow:0 6px 16px rgba(243,112,34,0.15);">Browse Collections</a>
       </div>
     `;
     if (totalEl) totalEl.textContent = '₹0';
@@ -631,14 +651,16 @@ function renderCart() {
         <img src="${item.image}" alt="${item.name}" class="cart-item-img">
         <div class="cart-item-info">
           <span class="cart-item-name">${item.name}</span>
-          <span class="cart-item-price">₹${item.price} x ${item.qty} = ₹${itemTotal}</span>
+          <span class="cart-item-price">₹${item.price}</span>
           <div class="cart-item-qty-control">
             <button class="qty-btn minus-qty" onclick="changeQty('${item.id}', -1)">-</button>
             <span class="qty-val">${item.qty}</span>
             <button class="qty-btn plus-qty" onclick="changeQty('${item.id}', 1)">+</button>
           </div>
         </div>
-        <button class="cart-item-remove" onclick="removeCartItem('${item.id}')">✕</button>
+        <button class="cart-item-remove" onclick="removeCartItem('${item.id}')" title="Remove item">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block; margin:0 auto;"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+        </button>
       </div>
     `;
   });
