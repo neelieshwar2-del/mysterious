@@ -3,24 +3,78 @@ const express = require('express');
 const path = require('path');
 const multer = require('multer');
 const fs = require('fs');
-const twilio = require('twilio');
+const QRCode = require('qrcode');
+
+// ─── WhatsApp Web Client (whatsapp-web.js) ────────────────────────────────────
+let waClient = null;
+let waReady = false;
+let waQrDataUrl = null;
+let waInitializing = false;
+
+function initWhatsAppClient() {
+  if (waInitializing || waReady) return;
+  waInitializing = true;
+
+  try {
+    const { Client, LocalAuth } = require('whatsapp-web.js');
+    waClient = new Client({
+      authStrategy: new LocalAuth({ dataPath: path.join(__dirname, '.whatsapp-session') }),
+      puppeteer: {
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+      }
+    });
+
+    waClient.on('qr', async (qr) => {
+      console.log('[WhatsApp] QR Code ready — scan it from the Admin panel.');
+      try {
+        waQrDataUrl = await QRCode.toDataURL(qr);
+      } catch (e) {
+        waQrDataUrl = null;
+      }
+      waReady = false;
+    });
+
+    waClient.on('ready', () => {
+      console.log('[WhatsApp] ✅ Connected! Messages will now send automatically.');
+      waReady = true;
+      waQrDataUrl = null;
+    });
+
+    waClient.on('authenticated', () => {
+      console.log('[WhatsApp] Authenticated successfully.');
+    });
+
+    waClient.on('auth_failure', (msg) => {
+      console.error('[WhatsApp] Auth failure:', msg);
+      waReady = false;
+      waInitializing = false;
+    });
+
+    waClient.on('disconnected', (reason) => {
+      console.warn('[WhatsApp] Disconnected:', reason);
+      waReady = false;
+      waQrDataUrl = null;
+      waInitializing = false;
+      // Auto-reconnect after 10 seconds
+      setTimeout(initWhatsAppClient, 10000);
+    });
+
+    waClient.initialize();
+    console.log('[WhatsApp] Initializing client...');
+  } catch (err) {
+    console.error('[WhatsApp] Failed to start client:', err.message);
+    waInitializing = false;
+  }
+}
+
+// Start WhatsApp client on server boot
+initWhatsAppClient();
+// ──────────────────────────────────────────────────────────────────────────────
 
 const app = express();
 app.use(express.json());
 const PORT = process.env.PORT || 3000;
-
-// Initialize Twilio client conditionally
-const twilioAccountSid = process.env.TWILIO_ACCOUNT_SID;
-const twilioAuthToken = process.env.TWILIO_AUTH_TOKEN;
-let twilioClient = null;
-if (twilioAccountSid && twilioAuthToken && !twilioAccountSid.startsWith('ACXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')) {
-  try {
-    twilioClient = twilio(twilioAccountSid, twilioAuthToken);
-  } catch (err) {
-    console.error('Failed to initialize Twilio client:', err.message);
-  }
-}
-
 
 // Ensure public/images directory exists
 const uploadDir = path.join(__dirname, 'public', 'images');
@@ -428,43 +482,51 @@ app.put('/api/orders/:id', (req, res) => {
   }
 });
 
-// POST send WhatsApp message via Twilio API
+
+// GET WhatsApp connection status
+app.get('/api/whatsapp-status', (req, res) => {
+  res.json({
+    ready: waReady,
+    hasQr: !!waQrDataUrl,
+    initializing: waInitializing
+  });
+});
+
+// GET WhatsApp QR code (base64 image)
+app.get('/api/whatsapp-qr', (req, res) => {
+  if (waReady) {
+    return res.json({ ready: true, qr: null });
+  }
+  if (!waQrDataUrl) {
+    return res.json({ ready: false, qr: null, message: 'QR not generated yet. Please wait...' });
+  }
+  res.json({ ready: false, qr: waQrDataUrl });
+});
+
+// POST send WhatsApp message automatically via whatsapp-web.js
 app.post('/api/send-whatsapp', async (req, res) => {
   const { to, message } = req.body;
 
   if (!to || !message) {
-    return res.status(400).json({ error: 'Missing phone number (to) or message content' });
+    return res.status(400).json({ error: 'Missing phone number (to) or message.' });
   }
 
-  // Sanitize the phone number
   let cleanPhone = to.replace(/\D/g, '');
-  if (cleanPhone.length === 10) {
-    cleanPhone = '91' + cleanPhone;
-  }
+  if (cleanPhone.length === 10) cleanPhone = '91' + cleanPhone;
 
-  // If Twilio is not fully configured, log the message and simulate success
-  if (!twilioClient) {
-    console.warn(`[Twilio Mock] Twilio not configured or using placeholders. Message to +${cleanPhone}:`);
-    console.warn(`Content: ${message}`);
-    return res.status(200).json({
-      success: true,
-      mock: true,
-      message: 'Twilio is unconfigured. Message logged to server console.'
+  if (!waReady || !waClient) {
+    return res.status(503).json({
+      error: 'WhatsApp not connected. Please scan the QR code in the Admin panel → WhatsApp Setup tab.'
     });
   }
 
   try {
-    const fromNumber = process.env.TWILIO_WHATSAPP_NUMBER || '+14155238886';
-    const result = await twilioClient.messages.create({
-      from: `whatsapp:${fromNumber}`,
-      to: `whatsapp:+${cleanPhone}`,
-      body: message
-    });
-
-    res.status(200).json({ success: true, messageSid: result.sid });
+    await waClient.sendMessage(`${cleanPhone}@c.us`, message);
+    console.log(`[WhatsApp] ✅ Message sent to +${cleanPhone}`);
+    res.json({ success: true, to: `+${cleanPhone}` });
   } catch (error) {
-    console.error('Failed to send WhatsApp message via Twilio:', error);
-    res.status(500).json({ error: 'Failed to send WhatsApp notification', details: error.message });
+    console.error('[WhatsApp] Send error:', error.message);
+    res.status(500).json({ error: 'Failed to send message', details: error.message });
   }
 });
 

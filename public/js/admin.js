@@ -613,6 +613,7 @@ function switchTab(tabId, pushToHistory = true) {
   else if (tabId === 'products') newTitle = 'Product Inventory';
   else if (tabId === 'rentals') newTitle = 'Rental Inventory';
   else if (tabId === 'orders') newTitle = 'Order Management';
+  else if (tabId === 'whatsapp-setup') newTitle = 'WhatsApp Automation';
   else if (tabId === 'add-item') {
     const isEditing = document.getElementById('itemId').value !== '';
     newTitle = isEditing ? 'Edit Item Details' : 'Add New Inventory Item';
@@ -640,7 +641,76 @@ function switchTab(tabId, pushToHistory = true) {
   else if (tabId === 'products') renderProducts();
   else if (tabId === 'rentals') renderRentals();
   else if (tabId === 'orders') renderOrders();
+  else if (tabId === 'whatsapp-setup') startWaStatusPolling();
 }
+
+// ─── WhatsApp Setup Panel Logic ───────────────────────────────────────────────
+let waStatusPollInterval = null;
+
+function startWaStatusPolling() {
+  // Immediately fetch
+  fetchWaStatus();
+  // Poll every 3 seconds while tab is visible
+  if (waStatusPollInterval) clearInterval(waStatusPollInterval);
+  waStatusPollInterval = setInterval(() => {
+    // Stop polling if user navigated away
+    const section = document.getElementById('whatsapp-setupSection');
+    if (!section || !section.classList.contains('active')) {
+      clearInterval(waStatusPollInterval);
+      waStatusPollInterval = null;
+      return;
+    }
+    fetchWaStatus();
+  }, 3000);
+}
+
+async function fetchWaStatus() {
+  try {
+    const res = await fetch('/api/whatsapp-qr');
+    const data = await res.json();
+    updateWaStatusUi(data);
+  } catch (e) {
+    updateWaStatusUi({ ready: false, qr: null, error: true });
+  }
+}
+
+function updateWaStatusUi(data) {
+  const dot = document.getElementById('waStatusDot');
+  const title = document.getElementById('waStatusTitle');
+  const desc = document.getElementById('waStatusDesc');
+  const qrArea = document.getElementById('waQrArea');
+  const qrImg = document.getElementById('waQrImage');
+
+  if (!dot || !title || !desc) return;
+
+  if (data.ready) {
+    // Connected!
+    dot.style.background = '#22c55e';
+    title.textContent = '✅ WhatsApp Connected!';
+    desc.textContent = 'Automated messages are active. Status updates will send automatically.';
+    if (qrArea) qrArea.style.display = 'none';
+    // Stop polling once connected
+    if (waStatusPollInterval) { clearInterval(waStatusPollInterval); waStatusPollInterval = null; }
+  } else if (data.qr) {
+    // QR code available - show it
+    dot.style.background = '#f59e0b';
+    title.textContent = '📱 Scan QR Code to Connect';
+    desc.textContent = 'Open WhatsApp on your phone and scan the QR code below.';
+    if (qrArea) qrArea.style.display = 'block';
+    if (qrImg) qrImg.src = data.qr;
+  } else if (data.error) {
+    dot.style.background = '#ef4444';
+    title.textContent = '❌ Server Unreachable';
+    desc.textContent = 'Could not connect to server. Make sure the server is running.';
+  } else {
+    // Initializing
+    dot.style.background = '#f59e0b';
+    title.textContent = '⏳ Initializing WhatsApp...';
+    desc.textContent = data.message || 'WhatsApp client is starting up. QR code will appear shortly.';
+    if (qrArea) qrArea.style.display = 'none';
+  }
+}
+// ─────────────────────────────────────────────────────────────────────────────
 
 // Bind Element Event Listeners
 function setupEventListeners() {
@@ -1318,11 +1388,11 @@ function triggerNotificationIfApplicable(order, status) {
   if (!message) return false;
 
   const now = new Date();
-  const dateStr = now.getFullYear() + '-' + 
-                  String(now.getMonth() + 1).padStart(2, '0') + '-' + 
-                  String(now.getDate()).padStart(2, '0') + ' ' + 
-                  String(now.getHours()).padStart(2, '0') + ':' + 
-                  String(now.getMinutes()).padStart(2, '0') + ' ' + 
+  const dateStr = now.getFullYear() + '-' +
+                  String(now.getMonth() + 1).padStart(2, '0') + '-' +
+                  String(now.getDate()).padStart(2, '0') + ' ' +
+                  String(now.getHours()).padStart(2, '0') + ':' +
+                  String(now.getMinutes()).padStart(2, '0') + ' ' +
                   (now.getHours() >= 12 ? 'PM' : 'AM');
 
   // Log to notification history
@@ -1330,27 +1400,45 @@ function triggerNotificationIfApplicable(order, status) {
   order.notificationHistory.push({
     type: status.toUpperCase(),
     sentTime: dateStr,
-    status: 'Sent',
+    status: 'Sending...',
     mobile: order.mobileNumber,
     message: message
   });
 
-  // Build WhatsApp wa.me link — opens WhatsApp with customer number + message pre-filled
-  let cleanPhone = (order.mobileNumber || '').replace(/\D/g, '');
-  if (cleanPhone.length === 10) cleanPhone = '91' + cleanPhone;
+  // Attempt fully automated send via whatsapp-web.js backend
+  fetch('/api/send-whatsapp', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ to: order.mobileNumber, message: message })
+  })
+  .then(async (response) => {
+    const data = await response.json();
+    if (response.ok) {
+      // Update log status to Sent
+      const logEntry = order.notificationHistory[order.notificationHistory.length - 1];
+      if (logEntry) logEntry.status = 'Sent';
+      showToast(`✅ WhatsApp sent to ${order.customerName} (${order.mobileNumber})`);
+    } else {
+      // WhatsApp not connected — fall back to wa.me link
+      const logEntry = order.notificationHistory[order.notificationHistory.length - 1];
+      if (logEntry) logEntry.status = 'Manual';
 
-  if (!cleanPhone || cleanPhone.length < 10) {
-    showToast('⚠️ No mobile number for this order. Cannot send WhatsApp.');
-    return false;
-  }
+      let cleanPhone = (order.mobileNumber || '').replace(/\D/g, '');
+      if (cleanPhone.length === 10) cleanPhone = '91' + cleanPhone;
+      const waUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
+      window.open(waUrl, '_blank');
+      showToast(`⚠️ WhatsApp not connected. Opening manually. Go to Admin → WhatsApp Setup to enable automation.`);
+    }
+  })
+  .catch(() => {
+    // Network error fallback
+    let cleanPhone = (order.mobileNumber || '').replace(/\D/g, '');
+    if (cleanPhone.length === 10) cleanPhone = '91' + cleanPhone;
+    const waUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
+    window.open(waUrl, '_blank');
+    showToast(`📲 WhatsApp opened for ${order.customerName}. Tap Send.`);
+  });
 
-  const encodedMessage = encodeURIComponent(message);
-  const waUrl = `https://wa.me/${cleanPhone}?text=${encodedMessage}`;
-
-  // Open WhatsApp in a new tab — customer number + message are pre-filled
-  window.open(waUrl, '_blank');
-
-  showToast(`📲 WhatsApp opened for ${order.customerName} (${order.mobileNumber}). Tap Send!`);
   return true;
 }
 
