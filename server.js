@@ -17,9 +17,26 @@ function initWhatsAppClient() {
 
   try {
     const { Client, LocalAuth } = require('whatsapp-web.js');
+
+    // Use system-installed Chrome to avoid Puppeteer version conflicts
+    const possibleChromePaths = [
+      'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
+      'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+      'C:\\Users\\' + require('os').userInfo().username + '\\AppData\\Local\\Google\\Chrome\\Application\\chrome.exe',
+    ];
+    const fs2 = require('fs');
+    const chromePath = possibleChromePaths.find(p => fs2.existsSync(p));
+    if (!chromePath) {
+      console.error('[WhatsApp] Chrome not found. Please install Google Chrome.');
+      waInitializing = false;
+      return;
+    }
+    console.log('[WhatsApp] Using Chrome at:', chromePath);
+
     waClient = new Client({
       authStrategy: new LocalAuth({ dataPath: path.join(__dirname, '.whatsapp-session') }),
       puppeteer: {
+        executablePath: chromePath,
         headless: true,
         args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
       }
