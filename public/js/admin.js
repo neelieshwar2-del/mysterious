@@ -1286,19 +1286,26 @@ const NotificationService = {
     const customerName = order.customerName;
     const orderId = order.id;
     const productList = order.items.map(it => `- ${it.name} x ${it.quantity}`).join('\n');
+    const total = order.totalAmount ? `\n\nTotal: ₹${order.totalAmount}` : '';
     
     switch (status.toUpperCase()) {
       case 'CONFIRMED':
-        return `🙏 Veerabhadra Pooja Store\n\nHello ${customerName},\n\nYour order has been confirmed.\n\nOrder ID:\n${orderId}\n\nItems:\n${productList}\n\nWe are preparing your order.\n\nThank you.`;
+        return `🙏 *Veerabhadra Pooja Store*\n\nHello ${customerName},\n\nYour order has been *confirmed*! ✅\n\n*Order ID:* ${orderId}\n\n*Items:*\n${productList}${total}\n\nWe are preparing your order. We will notify you when it's packed.\n\nThank you for shopping with us! 🪔`;
+        
+      case 'PREPARING':
+        return `⚙️ *Veerabhadra Pooja Store*\n\nHello ${customerName},\n\nYour order is now being *prepared*!\n\n*Order ID:* ${orderId}\n\n*Items:*\n${productList}\n\nWe will notify you once it is packed and ready.\n\nThank you! 🙏`;
         
       case 'PACKED':
-        return `📦 Veerabhadra Pooja Store\n\nHello ${customerName},\n\nYour order has been packed successfully.\n\nOrder ID:\n${orderId}\n\nItems:\n${productList}\n\nYour order is ready for pickup.\n\nPlease visit our store during business hours.\n\nThank you.`;
+        return `📦 *Veerabhadra Pooja Store*\n\nHello ${customerName},\n\nYour order has been *packed* and is ready! ✅\n\n*Order ID:* ${orderId}\n\n*Items:*\n${productList}\n\nYou can collect your order from our store during business hours.\n\nThank you! 🙏`;
         
       case 'READY FOR PICKUP':
-        return `📍 Veerabhadra Pooja Store\n\nYour order is now ready for pickup.\n\nOrder ID:\n${orderId}\n\nItems:\n${productList}\n\nPlease collect your order from the store.\n\nThank you.`;
+        return `📍 *Veerabhadra Pooja Store*\n\nHello ${customerName},\n\nYour order is *ready for pickup!* 🎉\n\n*Order ID:* ${orderId}\n\n*Items:*\n${productList}\n\nPlease visit our store to collect your order.\n\n📍 Madhavi Nagar, Shanti Nagar Bus Stop, Hydershahkote, Ranga Reddy\n\nThank you! 🙏`;
         
       case 'DELIVERED':
-        return `🙏 Thank You\n\nYour order has been successfully delivered.\n\nOrder ID:\n${orderId}\n\nItems:\n${productList}\n\nThank you for shopping with Veerabhadra Pooja Store.\n\nWe hope to serve you again.\n\nPlease share your valuable feedback.`;
+        return `✅ *Veerabhadra Pooja Store*\n\nHello ${customerName},\n\nYour order has been successfully *delivered!* 🎉\n\n*Order ID:* ${orderId}\n\n*Items:*\n${productList}\n\nThank you for shopping with Veerabhadra Pooja Store! 🙏\n\nWe hope to serve you again. Please share your valuable feedback.`;
+        
+      case 'CANCELLED':
+        return `❌ *Veerabhadra Pooja Store*\n\nHello ${customerName},\n\nWe regret to inform you that your order has been *cancelled*.\n\n*Order ID:* ${orderId}\n\n*Items:*\n${productList}\n\nIf you have any questions, please contact us on WhatsApp.\n\nSorry for the inconvenience. 🙏`;
         
       default:
         return null;
@@ -1317,34 +1324,33 @@ function triggerNotificationIfApplicable(order, status) {
                   String(now.getHours()).padStart(2, '0') + ':' + 
                   String(now.getMinutes()).padStart(2, '0') + ' ' + 
                   (now.getHours() >= 12 ? 'PM' : 'AM');
-                  
-  const logEntry = {
+
+  // Log to notification history
+  if (!order.notificationHistory) order.notificationHistory = [];
+  order.notificationHistory.push({
     type: status.toUpperCase(),
     sentTime: dateStr,
     status: 'Sent',
     mobile: order.mobileNumber,
     message: message
-  };
-  
-  if (!order.notificationHistory) {
-    order.notificationHistory = [];
-  }
-  
-  order.notificationHistory.push(logEntry);
-  
-  console.log(`[Notification Subsystem] Dispatching WhatsApp Notification for ${order.id}:`);
-  console.log(`To: ${order.mobileNumber}`);
-  console.log(`Message:\n${message}`);
+  });
 
-  // Actually open WhatsApp so the admin can send the message
-  let customerPhone = order.mobileNumber.replace(/\D/g, '');
-  if (customerPhone.length === 10) {
-    customerPhone = '91' + customerPhone;
+  // Build WhatsApp wa.me link — opens WhatsApp with customer number + message pre-filled
+  let cleanPhone = (order.mobileNumber || '').replace(/\D/g, '');
+  if (cleanPhone.length === 10) cleanPhone = '91' + cleanPhone;
+
+  if (!cleanPhone || cleanPhone.length < 10) {
+    showToast('⚠️ No mobile number for this order. Cannot send WhatsApp.');
+    return false;
   }
-  const encodedText = encodeURIComponent(message);
-  const whatsappUrl = `https://wa.me/${customerPhone}?text=${encodedText}`;
-  window.open(whatsappUrl, '_blank');
-  
+
+  const encodedMessage = encodeURIComponent(message);
+  const waUrl = `https://wa.me/${cleanPhone}?text=${encodedMessage}`;
+
+  // Open WhatsApp in a new tab — customer number + message are pre-filled
+  window.open(waUrl, '_blank');
+
+  showToast(`📲 WhatsApp opened for ${order.customerName} (${order.mobileNumber}). Tap Send!`);
   return true;
 }
 

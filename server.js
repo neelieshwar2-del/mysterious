@@ -1,10 +1,26 @@
+require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const multer = require('multer');
 const fs = require('fs');
+const twilio = require('twilio');
+
 const app = express();
 app.use(express.json());
 const PORT = process.env.PORT || 3000;
+
+// Initialize Twilio client conditionally
+const twilioAccountSid = process.env.TWILIO_ACCOUNT_SID;
+const twilioAuthToken = process.env.TWILIO_AUTH_TOKEN;
+let twilioClient = null;
+if (twilioAccountSid && twilioAuthToken && !twilioAccountSid.startsWith('ACXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')) {
+  try {
+    twilioClient = twilio(twilioAccountSid, twilioAuthToken);
+  } catch (err) {
+    console.error('Failed to initialize Twilio client:', err.message);
+  }
+}
+
 
 // Ensure public/images directory exists
 const uploadDir = path.join(__dirname, 'public', 'images');
@@ -409,6 +425,46 @@ app.put('/api/orders/:id', (req, res) => {
     }
   } catch (err) {
     res.status(500).json({ error: 'Failed to update order status' });
+  }
+});
+
+// POST send WhatsApp message via Twilio API
+app.post('/api/send-whatsapp', async (req, res) => {
+  const { to, message } = req.body;
+
+  if (!to || !message) {
+    return res.status(400).json({ error: 'Missing phone number (to) or message content' });
+  }
+
+  // Sanitize the phone number
+  let cleanPhone = to.replace(/\D/g, '');
+  if (cleanPhone.length === 10) {
+    cleanPhone = '91' + cleanPhone;
+  }
+
+  // If Twilio is not fully configured, log the message and simulate success
+  if (!twilioClient) {
+    console.warn(`[Twilio Mock] Twilio not configured or using placeholders. Message to +${cleanPhone}:`);
+    console.warn(`Content: ${message}`);
+    return res.status(200).json({
+      success: true,
+      mock: true,
+      message: 'Twilio is unconfigured. Message logged to server console.'
+    });
+  }
+
+  try {
+    const fromNumber = process.env.TWILIO_WHATSAPP_NUMBER || '+14155238886';
+    const result = await twilioClient.messages.create({
+      from: `whatsapp:${fromNumber}`,
+      to: `whatsapp:+${cleanPhone}`,
+      body: message
+    });
+
+    res.status(200).json({ success: true, messageSid: result.sid });
+  } catch (error) {
+    console.error('Failed to send WhatsApp message via Twilio:', error);
+    res.status(500).json({ error: 'Failed to send WhatsApp notification', details: error.message });
   }
 });
 
