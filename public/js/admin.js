@@ -685,7 +685,10 @@ function updateWaStatusUi(data) {
 
   if (data.ready) {
     dot.style.background = '#22c55e';
-    if (data.provider === 'ultramsg') {
+    if (data.provider === 'greenapi') {
+      title.textContent = '✅ WhatsApp Connected via Green API (Free)!';
+      desc.textContent = '500 free messages/month active. Order updates send automatically on Vercel.';
+    } else if (data.provider === 'ultramsg') {
       title.textContent = '✅ WhatsApp Connected via UltraMsg!';
       desc.textContent = 'Cloud messaging is active. Order status messages send automatically on Vercel.';
     } else {

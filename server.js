@@ -289,12 +289,17 @@ app.get('/api/whatsapp-status', (req, res) => {
   });
 });
 
-// GET WhatsApp QR code (base64 image)
+// GET WhatsApp QR code / status
 app.get('/api/whatsapp-qr', (req, res) => {
-  // If UltraMsg is configured, report as ready (no QR needed from this panel)
+  // Green API configured — free option, no QR needed from this panel
+  if (process.env.GREEN_API_ID && process.env.GREEN_API_TOKEN) {
+    return res.json({ ready: true, qr: null, provider: 'greenapi' });
+  }
+  // UltraMsg configured
   if (process.env.ULTRAMSG_INSTANCE_ID && process.env.ULTRAMSG_TOKEN) {
     return res.json({ ready: true, qr: null, provider: 'ultramsg' });
   }
+  // Local whatsapp-web.js
   if (waReady) {
     return res.json({ ready: true, qr: null, provider: 'local' });
   }
@@ -305,7 +310,7 @@ app.get('/api/whatsapp-qr', (req, res) => {
 });
 
 // POST send WhatsApp message
-// Priority: UltraMsg (Vercel) → whatsapp-web.js (local) → 503 error
+// Priority: Green API (free) → UltraMsg (paid) → local whatsapp-web.js → 503
 app.post('/api/send-whatsapp', async (req, res) => {
   const { to, message } = req.body;
   if (!to || !message) {
@@ -315,7 +320,42 @@ app.post('/api/send-whatsapp', async (req, res) => {
   let cleanPhone = to.replace(/\D/g, '');
   if (cleanPhone.length === 10) cleanPhone = '91' + cleanPhone;
 
-  // ── Option 1: UltraMsg Cloud API (works on Vercel) ──────────────────────
+  // ── Option 1: Green API — FREE (500 msgs/month, no credit card) ──────────
+  const GREEN_ID    = process.env.GREEN_API_ID;
+  const GREEN_TOKEN = process.env.GREEN_API_TOKEN;
+  if (GREEN_ID && GREEN_TOKEN) {
+    try {
+      const https = require('https');
+      const postData = JSON.stringify({ chatId: `${cleanPhone}@c.us`, message });
+      const options = {
+        hostname: 'api.green-api.com',
+        path: `/waInstance${GREEN_ID}/sendMessage/${GREEN_TOKEN}`,
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(postData) }
+      };
+      const result = await new Promise((resolve, reject) => {
+        const r2 = https.request(options, (r) => {
+          let data = '';
+          r.on('data', chunk => data += chunk);
+          r.on('end', () => resolve({ status: r.statusCode, body: data }));
+        });
+        r2.on('error', reject);
+        r2.write(postData);
+        r2.end();
+      });
+      const body = JSON.parse(result.body);
+      if (body.idMessage) {
+        console.log(`[GreenAPI] ✅ Sent to +${cleanPhone}`);
+        return res.json({ success: true, to: `+${cleanPhone}`, provider: 'greenapi' });
+      }
+      throw new Error(body.message || JSON.stringify(body));
+    } catch (err) {
+      console.error('[GreenAPI] Error:', err.message);
+      return res.status(500).json({ error: 'Green API send failed: ' + err.message });
+    }
+  }
+
+  // ── Option 2: UltraMsg Cloud API ─────────────────────────────────────────
   const ULTRAMSG_INSTANCE = process.env.ULTRAMSG_INSTANCE_ID;
   const ULTRAMSG_TOKEN    = process.env.ULTRAMSG_TOKEN;
   if (ULTRAMSG_INSTANCE && ULTRAMSG_TOKEN) {
@@ -329,14 +369,14 @@ app.post('/api/send-whatsapp', async (req, res) => {
         headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(postData) }
       };
       const result = await new Promise((resolve, reject) => {
-        const req2 = https.request(options, (r) => {
+        const r2 = https.request(options, (r) => {
           let data = '';
           r.on('data', chunk => data += chunk);
           r.on('end', () => resolve({ status: r.statusCode, body: data }));
         });
-        req2.on('error', reject);
-        req2.write(postData);
-        req2.end();
+        r2.on('error', reject);
+        r2.write(postData);
+        r2.end();
       });
       const body = JSON.parse(result.body);
       if (body.sent === 'true' || body.message === 'ok') {
@@ -350,7 +390,7 @@ app.post('/api/send-whatsapp', async (req, res) => {
     }
   }
 
-  // ── Option 2: Local whatsapp-web.js ─────────────────────────────────────
+  // ── Option 3: Local whatsapp-web.js ──────────────────────────────────────
   if (waReady && waClient) {
     try {
       await waClient.sendMessage(`${cleanPhone}@c.us`, message);
@@ -362,11 +402,11 @@ app.post('/api/send-whatsapp', async (req, res) => {
     }
   }
 
-  // ── Option 3: Not connected ──────────────────────────────────────────────
+  // ── Option 4: Not connected ───────────────────────────────────────────────
   return res.status(503).json({
     error: 'WhatsApp not connected.',
     hint: process.env.VERCEL
-      ? 'Set ULTRAMSG_INSTANCE_ID and ULTRAMSG_TOKEN in Vercel Environment Variables.'
+      ? 'Add GREEN_API_ID + GREEN_API_TOKEN in Vercel Environment Variables (free at green-api.com).'
       : 'Scan the QR code in Admin → WhatsApp Setup tab.'
   });
 });
