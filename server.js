@@ -1,4 +1,4 @@
-﻿require('dotenv').config();
+require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const multer = require('multer');
@@ -291,8 +291,12 @@ app.get('/api/whatsapp-status', (req, res) => {
 
 // GET WhatsApp QR code (base64 image)
 app.get('/api/whatsapp-qr', (req, res) => {
+  // If UltraMsg is configured, report as ready (no QR needed from this panel)
+  if (process.env.ULTRAMSG_INSTANCE_ID && process.env.ULTRAMSG_TOKEN) {
+    return res.json({ ready: true, qr: null, provider: 'ultramsg' });
+  }
   if (waReady) {
-    return res.json({ ready: true, qr: null });
+    return res.json({ ready: true, qr: null, provider: 'local' });
   }
   if (!waQrDataUrl) {
     return res.json({ ready: false, qr: null, message: 'QR not generated yet. Please wait...' });
@@ -300,31 +304,71 @@ app.get('/api/whatsapp-qr', (req, res) => {
   res.json({ ready: false, qr: waQrDataUrl });
 });
 
-// POST send WhatsApp message automatically via whatsapp-web.js
+// POST send WhatsApp message
+// Priority: UltraMsg (Vercel) → whatsapp-web.js (local) → 503 error
 app.post('/api/send-whatsapp', async (req, res) => {
   const { to, message } = req.body;
-
   if (!to || !message) {
-    return res.status(400).json({ error: 'Missing phone number (to) or message.' });
+    return res.status(400).json({ error: 'Missing phone number or message.' });
   }
 
   let cleanPhone = to.replace(/\D/g, '');
   if (cleanPhone.length === 10) cleanPhone = '91' + cleanPhone;
 
-  if (!waReady || !waClient) {
-    return res.status(503).json({
-      error: 'WhatsApp not connected. Please scan the QR code in the Admin panel â†’ WhatsApp Setup tab.'
-    });
+  // ── Option 1: UltraMsg Cloud API (works on Vercel) ──────────────────────
+  const ULTRAMSG_INSTANCE = process.env.ULTRAMSG_INSTANCE_ID;
+  const ULTRAMSG_TOKEN    = process.env.ULTRAMSG_TOKEN;
+  if (ULTRAMSG_INSTANCE && ULTRAMSG_TOKEN) {
+    try {
+      const https = require('https');
+      const postData = JSON.stringify({ token: ULTRAMSG_TOKEN, to: cleanPhone, body: message });
+      const options = {
+        hostname: 'api.ultramsg.com',
+        path: `/${ULTRAMSG_INSTANCE}/messages/chat`,
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(postData) }
+      };
+      const result = await new Promise((resolve, reject) => {
+        const req2 = https.request(options, (r) => {
+          let data = '';
+          r.on('data', chunk => data += chunk);
+          r.on('end', () => resolve({ status: r.statusCode, body: data }));
+        });
+        req2.on('error', reject);
+        req2.write(postData);
+        req2.end();
+      });
+      const body = JSON.parse(result.body);
+      if (body.sent === 'true' || body.message === 'ok') {
+        console.log(`[UltraMsg] ✅ Sent to +${cleanPhone}`);
+        return res.json({ success: true, to: `+${cleanPhone}`, provider: 'ultramsg' });
+      }
+      throw new Error(body.error || JSON.stringify(body));
+    } catch (err) {
+      console.error('[UltraMsg] Error:', err.message);
+      return res.status(500).json({ error: 'UltraMsg send failed: ' + err.message });
+    }
   }
 
-  try {
-    await waClient.sendMessage(`${cleanPhone}@c.us`, message);
-    console.log(`[WhatsApp] âœ… Message sent to +${cleanPhone}`);
-    res.json({ success: true, to: `+${cleanPhone}` });
-  } catch (error) {
-    console.error('[WhatsApp] Send error:', error.message);
-    res.status(500).json({ error: 'Failed to send message', details: error.message });
+  // ── Option 2: Local whatsapp-web.js ─────────────────────────────────────
+  if (waReady && waClient) {
+    try {
+      await waClient.sendMessage(`${cleanPhone}@c.us`, message);
+      console.log(`[WhatsApp] ✅ Message sent to +${cleanPhone}`);
+      return res.json({ success: true, to: `+${cleanPhone}`, provider: 'local' });
+    } catch (error) {
+      console.error('[WhatsApp] Send error:', error.message);
+      return res.status(500).json({ error: 'Failed to send message', details: error.message });
+    }
   }
+
+  // ── Option 3: Not connected ──────────────────────────────────────────────
+  return res.status(503).json({
+    error: 'WhatsApp not connected.',
+    hint: process.env.VERCEL
+      ? 'Set ULTRAMSG_INSTANCE_ID and ULTRAMSG_TOKEN in Vercel Environment Variables.'
+      : 'Scan the QR code in Admin → WhatsApp Setup tab.'
+  });
 });
 
 // Redirect clean routes to corresponding static HTML files

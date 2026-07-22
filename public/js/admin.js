@@ -684,15 +684,17 @@ function updateWaStatusUi(data) {
   if (!dot || !title || !desc) return;
 
   if (data.ready) {
-    // Connected!
     dot.style.background = '#22c55e';
-    title.textContent = '✅ WhatsApp Connected!';
-    desc.textContent = 'Automated messages are active. Status updates will send automatically.';
+    if (data.provider === 'ultramsg') {
+      title.textContent = '✅ WhatsApp Connected via UltraMsg!';
+      desc.textContent = 'Cloud messaging is active. Order status messages send automatically on Vercel.';
+    } else {
+      title.textContent = '✅ WhatsApp Connected!';
+      desc.textContent = 'Automated messages are active. Status updates will send automatically.';
+    }
     if (qrArea) qrArea.style.display = 'none';
-    // Stop polling once connected
     if (waStatusPollInterval) { clearInterval(waStatusPollInterval); waStatusPollInterval = null; }
   } else if (data.qr) {
-    // QR code available - show it
     dot.style.background = '#f59e0b';
     title.textContent = '📱 Scan QR Code to Connect';
     desc.textContent = 'Open WhatsApp on your phone and scan the QR code below.';
@@ -703,7 +705,6 @@ function updateWaStatusUi(data) {
     title.textContent = '❌ Server Unreachable';
     desc.textContent = 'Could not connect to server. Make sure the server is running.';
   } else {
-    // Initializing
     dot.style.background = '#f59e0b';
     title.textContent = '⏳ Initializing WhatsApp...';
     desc.textContent = data.message || 'WhatsApp client is starting up. QR code will appear shortly.';
