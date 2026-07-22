@@ -85,8 +85,10 @@ function initWhatsAppClient() {
   }
 }
 
-// Start WhatsApp client on server boot
-initWhatsAppClient();
+// Only start WhatsApp client when running locally (not on Vercel — no Chrome support)
+if (!process.env.VERCEL) {
+  initWhatsAppClient();
+}
 // ──────────────────────────────────────────────────────────────────────────────
 
 const app = express();
@@ -593,6 +595,12 @@ app.use((req, res) => {
   res.status(404).sendFile(path.join(__dirname, 'public', 'index.html')); // Fallback to home or a custom 404 page
 });
 
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
-});
+// Local development: start HTTP server
+// Vercel serverless: export the app as a module
+if (process.env.VERCEL) {
+  module.exports = app;
+} else {
+  app.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
+  });
+}
