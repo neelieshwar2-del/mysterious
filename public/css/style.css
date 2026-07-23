@@ -1084,12 +1084,7 @@
    fill: var(--color-accent);
  }
 
- /* Shopping Cart Drawer */
- .cart-drawer {
-   position: fixed;
-   top: 0;
-   bottom: 0;
-   right: -100%;
+  /* Shopping Cart Drawer */
   .cart-drawer {
     position: fixed;
     top: 0;
@@ -1107,11 +1102,11 @@
     overflow: hidden;
     border-radius: var(--radius-md) 0 0 var(--radius-md);
   }
- 
+
   .cart-drawer.active {
     right: 0;
   }
- 
+
   .cart-header {
     padding: 1.5rem;
     border-bottom: 1px solid rgba(0, 0, 0, 0.05);
