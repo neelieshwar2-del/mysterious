@@ -1423,21 +1423,27 @@
    line-height: 1.7;
  }
 
- .footer-col ul {
-   list-style: none;
-   display: flex;
-   flex-direction: column;
-   gap: 0.75rem;
- }
+  .footer-col ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
 
- .footer-col ul a {
-   font-size: 0.9rem;
-   transition: color var(--transition-fast);
- }
+  .footer-col ul li {
+    list-style: none;
+  }
 
- .footer-col ul a:hover {
-   color: var(--color-secondary-light);
- }
+  .footer-col ul a {
+    color: rgba(255, 255, 255, 0.85);
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: color var(--transition-fast);
+  }
+
+  .footer-col ul a:hover {
+    color: var(--color-secondary-light);
+  }
 
  .footer-bottom {
    max-width: var(--max-width);
@@ -1603,79 +1609,7 @@
    }
  }
 
- /* Footer Styling */
- footer {
-   background: var(--color-bg-footer);
-   color: hsl(0, 0%, 90%);
-   padding: 4rem 2rem 2rem;
-   margin-top: 4rem;
- }
 
- .footer-container {
-   max-width: var(--max-width);
-   margin: 0 auto;
-   display: grid;
-   grid-template-columns: 2fr 1fr 1fr 1.5fr;
-   gap: 3rem;
- }
-
- .footer-col h3 {
-   font-family: var(--font-heading);
-   color: var(--color-secondary-light);
-   font-size: 1.2rem;
-   margin-bottom: 1.25rem;
-   position: relative;
- }
-
- .footer-col h3::after {
-   content: '';
-   display: block;
-   width: 30px;
-   height: 2px;
-   background: var(--color-primary);
-   margin-top: 0.4rem;
-   border-radius: var(--radius-full);
- }
-
- .footer-col p {
-   color: hsl(0, 0%, 75%);
-   line-height: 1.6;
-   font-size: 0.95rem;
- }
-
- .footer-col ul {
-   list-style: none;
- }
-
- .footer-col ul li {
-   margin-bottom: 0.75rem;
- }
-
- .footer-col ul li a {
-   color: hsl(0, 0%, 80%);
-   text-decoration: none;
-   font-size: 0.95rem;
-   transition: var(--transition-fast);
- }
-
- .footer-col ul li a:hover {
-   color: var(--color-primary-light);
-   padding-left: 4px;
- }
-
- .footer-bottom {
-   max-width: var(--max-width);
-   margin: 3rem auto 0;
-   padding-top: 1.5rem;
-   border-top: 1px solid rgba(255, 255, 255, 0.1);
-   display: flex;
-   justify-content: space-between;
-   align-items: center;
-   flex-wrap: wrap;
-   gap: 1rem;
-   color: hsl(0, 0%, 65%);
-   font-size: 0.9rem;
- }
 
  @media (max-width: 480px) {
    .hero {
