@@ -210,12 +210,37 @@ async function handleForgot(e) {
   }
 }
 
-function handleGoogleLogin() {
-  // Will require setup in Supabase dashboard
-  supabaseClient.auth.signInWithOAuth({
-    provider: 'google',
-  });
+async function handleGoogleLogin() {
+  try {
+    const errorEl = document.getElementById('loginGlobalError');
+    if (errorEl) errorEl.style.display = 'none';
+
+    const { data, error } = await supabaseClient.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin + '/index.html'
+      }
+    });
+
+    if (error) {
+      if (errorEl) {
+        errorEl.textContent = error.message || 'Google Sign-In failed. Please check Supabase configuration.';
+        errorEl.style.display = 'block';
+      } else {
+        alert(error.message);
+      }
+      return;
+    }
+
+    if (data && data.url) {
+      window.location.href = data.url;
+    }
+  } catch (err) {
+    console.error('Google login error:', err);
+    alert(err.message || 'Failed to initiate Google login.');
+  }
 }
+
 
 // Auto-redirect if already logged in
 window.addEventListener('DOMContentLoaded', async () => {
