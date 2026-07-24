@@ -943,6 +943,13 @@ function showWhatsAppConfirmationModal(orderId, isRental = false, onConfirm = nu
   };
 }
 
+// Helper to format absolute image URL for WhatsApp previews
+function getFullImageUrl(img) {
+  if (!img) return '';
+  if (img.startsWith('http://') || img.startsWith('https://')) return img;
+  return window.location.origin + '/' + img.replace(/^\//, '');
+}
+
 // Checkout Flow
 window.checkoutWhatsApp = () => {
   if (cart.length === 0) return;
@@ -960,7 +967,8 @@ window.checkoutWhatsApp = () => {
       items: cart.map(item => ({
         name: item.name,
         price: item.price,
-        quantity: item.qty
+        quantity: item.qty,
+        image: getFullImageUrl(item.image || 'images/brass-diya.png')
       })),
       totalAmount: total,
       status: 'Draft'
@@ -975,7 +983,11 @@ window.checkoutWhatsApp = () => {
 
     cart.forEach((item, index) => {
       const itemTotal = item.price * item.qty;
+      const fullImg = getFullImageUrl(item.image || 'images/brass-diya.png');
       message += `${index + 1}. *${item.name}* (Qty: ${item.qty}) - ₹${item.price} each [Total: ₹${itemTotal}]\n`;
+      if (fullImg) {
+        message += `   📷 Photo: ${fullImg}\n`;
+      }
     });
 
     message += `\n*TOTAL AMOUNT:* ₹${total}\n\n`;
@@ -997,14 +1009,23 @@ window.checkoutWhatsApp = () => {
 };
 
 // Immediate Single Item WhatsApp Order Direct
-window.orderDirect = (name, price) => {
+window.orderDirect = (name, price, customImage) => {
+  // Find matching product image from stored items / DEFAULT_ITEMS
+  let matchedImg = customImage || '';
+  if (!matchedImg) {
+    const allProducts = JSON.parse(localStorage.getItem('pooja_admin_products') || '[]').concat(DEFAULT_ITEMS);
+    const found = allProducts.find(p => p.name === name || name.startsWith(p.name));
+    if (found && found.image) matchedImg = found.image;
+  }
+  const fullImg = getFullImageUrl(matchedImg || 'images/brass-diya.png');
+
   if (price > 0 && !name.includes('Inquiry') && !name.includes('Query')) {
     showCustomerDetailsModal(async (customer) => {
       const orderId = await saveOrderToStorage({
         customerName: customer.name,
         mobileNumber: customer.phone,
         address: customer.address,
-        items: [{ name: name, price: price, quantity: 1 }],
+        items: [{ name: name, price: price, quantity: 1, image: fullImg }],
         totalAmount: price,
         status: 'Draft'
       });
@@ -1016,6 +1037,9 @@ window.orderDirect = (name, price) => {
       message += `- *Phone:* ${customer.phone}\n\n`;
       message += `*Product:* ${name}\n`;
       message += `*Price:* ₹${price}\n`;
+      if (fullImg) {
+        message += `📷 *Photo:* ${fullImg}\n`;
+      }
       message += `\nPlease confirm availability. Thank you!`;
 
       const encodedText = encodeURIComponent(message);
@@ -1027,12 +1051,17 @@ window.orderDirect = (name, price) => {
     });
   } else {
     // For inquiries (no price), just open WhatsApp directly
-    let message = `Hello! I want to inquire about: ${name}\n\nPlease share details. Thank you!`;
+    let message = `Hello! I want to inquire about: ${name}\n`;
+    if (fullImg) {
+      message += `📷 Photo: ${fullImg}\n`;
+    }
+    message += `\nPlease share details. Thank you!`;
     const encodedText = encodeURIComponent(message);
     const whatsappUrl = `https://wa.me/${WHATSAPP_PHONE}?text=${encodedText}`;
     window.open(whatsappUrl, '_blank');
   }
 };
+
 
 // 4. Rental Booking Form
 function initBookingForm() {
